@@ -134,10 +134,4 @@ public class BaseFoodItem extends Item {
             return new BaseFoodItem(this);
         }
     }
-
-    public static class BItem extends net.minecraft.world.item.BlockItem {
-        public BItem(Block block, Properties properties) {
-            super(block, properties);
-        }
-    }
 }

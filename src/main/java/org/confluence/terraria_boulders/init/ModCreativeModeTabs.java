@@ -17,8 +17,10 @@ public final class ModCreativeModeTabs {
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TERRARIA_BOULDERS = register(
             "terraria_boulders", (name) ->
-                    createCreativeModeTab(name, (parameters, output) ->
-                            addRegistryItem(ModItems.REGISTER, output), ModBlocks.BOULDER::toStack));
+                    createCreativeModeTab(name, (parameters, output) -> {
+                        addRegistryItem(ModItems.REGISTER, output);
+                        addRegistryItem(FoodItems.REGISTER, output);
+                    }, ModBlocks.BOULDER::toStack));
 
     private static DeferredHolder<CreativeModeTab, CreativeModeTab> register(
             String name,

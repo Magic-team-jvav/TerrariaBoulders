@@ -43,8 +43,7 @@ public final class ModBlocks {
     public static final DeferredBlock<BoulderBreadBlock> BOULDER_BREAD_BLOCK = registerWithItem("boulder_bread_block", BoulderBreadBlock::new);
 
     private static <B extends Block> DeferredBlock<B> register(String id, Supplier<B> supplier) {
-        DeferredBlock<B> block = REGISTER.register(id, supplier);
-        return block;
+        return REGISTER.register(id, supplier);
     }
 
     private static <B extends Block> DeferredBlock<B> registerWithItem(String id, Supplier<B> supplier) {

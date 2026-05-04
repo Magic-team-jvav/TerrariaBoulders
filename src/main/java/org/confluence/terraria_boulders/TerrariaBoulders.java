@@ -29,9 +29,10 @@ public class TerrariaBoulders {
         NeoForge.EVENT_BUS.register(this);
         ModEffects.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
-        ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModBlocks.REGISTER.register(modEventBus);
+        ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModItems.REGISTER.register(modEventBus);
+        FoodItems.REGISTER.register(modEventBus);
         ModCreativeModeTabs.REGISTRY.register(modEventBus);
     }
 
