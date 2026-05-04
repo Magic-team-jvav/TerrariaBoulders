@@ -8,7 +8,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
-import xiaojin.terraria_boulders.common.entity.boulder.*;
 
 import java.util.function.Supplier;
 

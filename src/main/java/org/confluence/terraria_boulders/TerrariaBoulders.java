@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.confluence.terraria_boulders.common.network.IPacket;
 import org.confluence.terraria_boulders.configs.ModConfigs;
-import xiaojin.terraria_boulders.init.*;
 
 @Mod(TerrariaBoulders.ID)
 public class TerrariaBoulders {

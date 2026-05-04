@@ -22,9 +22,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.mesdag.particlestorm.PSGameClient;
-import org.mesdag.particlestorm.data.molang.MolangExp;
-import org.mesdag.particlestorm.particle.ParticleEmitter;
 import org.confluence.terraria_boulders.init.ModBlocks;
 
 import java.util.ArrayList;

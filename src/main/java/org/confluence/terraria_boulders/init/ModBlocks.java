@@ -11,8 +11,6 @@ import org.confluence.terraria_boulders.common.block.boulder.BoulderBreadBlock;
 import org.confluence.terraria_boulders.common.block.boulder.ContactEffectBoulderBlock;
 import org.confluence.terraria_boulders.common.block.boulder.FullCollisionBoulderBlock;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
-import xiaojin.terraria_boulders.common.block.boulder.*;
-import xiaojin.terraria_boulders.common.entity.boulder.*;
 
 import java.util.function.Supplier;
 
