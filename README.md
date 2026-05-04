@@ -3,3 +3,5 @@
 本mod的内容是从汇流来世中提取的并加入了开发人员的独特内容。
 
 ![20dfc680-e745-4b6c-b1f2-647d5248b3e8.png](img/20dfc680-e745-4b6c-b1f2-647d5248b3e8.png)
+
+本MOD的资源均为[Magic-team-jvav](https://github.com/Magic-team-jvav/)团队所有
