@@ -1,4 +1,6 @@
 {
+  "effect.terraria_boulders.choking": "干噎",
+  "message.terraria_boulders.choking": "你被噎住了,需要喝水才行",
   "terraria_boulders.subtitle.soul_death": "灵体：湮灭",
   "itemGroup.terraria_boulders.terraria_boulders": "泰拉巨石",
   "block.terraria_boulders.boulder_bread_block": "巨石面包",
@@ -15,6 +17,7 @@
   "entity.terraria_boulders.boulder": "巨石",
   "entity.terraria_boulders.explode_boulder": "爆炸巨石",
   "entity.terraria_boulders.follower_boulder": "跟踪巨石",
+  "block.terraria_boulders.follower_boulder": "跟踪巨石",
   "entity.terraria_boulders.rolling_cactus_boulder": "仙人球",
   "entity.terraria_boulders.ghoulder": "鬼石",
   "entity.terraria_boulders.spider_boulder": "蜘蛛巨石",

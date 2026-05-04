@@ -8,11 +8,11 @@ import org.confluence.terraria_boulders.TerrariaBoulders;
 
 
 public final class ModSounds {
-    public static final DeferredRegister<SoundEvent> SOUNDS = TerrariaBoulders.modRegister(BuiltInRegistries.SOUND_EVENT);
+    public static final DeferredRegister<SoundEvent> REGISTER = TerrariaBoulders.modRegister(BuiltInRegistries.SOUND_EVENT);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> SOUL_DEATH = register("soul_death");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String id) {
-        return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(TerrariaBoulders.modRl(id)));
+        return REGISTER.register(id, () -> SoundEvent.createVariableRangeEvent(TerrariaBoulders.modRl(id)));
     }
 }

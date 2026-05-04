@@ -1,7 +1,7 @@
 {
     "parent": "terraria_boulders:block/boulder",
     "textures": {
-        "0": "terraria_boulders:block/boulder/ghoulder",
-        "particle": "terraria_boulders:block/boulder/ghoulder"
+        "0": "terraria_boulders:block/boulder/lava_boulder",
+        "particle": "terraria_boulders:block/boulder/lava_boulder"
     }
 }

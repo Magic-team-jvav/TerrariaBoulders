@@ -40,7 +40,7 @@ public final class ModBlocks {
     public static final DeferredBlock<BoulderBlock> RAINBOW_BOULDER = registerWithItem("rainbow_boulder", () ->
             new BoulderBlock(RainbowBoulderEntity::new));
 
-    public static final DeferredBlock<BoulderBreadBlock> BOULDER_BREAD_BLOCK = registerWithItem("boulder_bread_block", BoulderBreadBlock::new);
+    public static final DeferredBlock<BoulderBreadBlock> BOULDER_BREAD_BLOCK = register("boulder_bread_block", BoulderBreadBlock::new);
 
     private static <B extends Block> DeferredBlock<B> register(String id, Supplier<B> supplier) {
         return REGISTER.register(id, supplier);

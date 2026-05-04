@@ -27,6 +27,7 @@ public class TerrariaBoulders {
     public TerrariaBoulders(IEventBus modEventBus, ModContainer modContainer) {
         ModConfigs.register(modContainer);
         NeoForge.EVENT_BUS.register(this);
+        ModSounds.REGISTER.register(modEventBus);
         ModEffects.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
         ModBlocks.REGISTER.register(modEventBus);

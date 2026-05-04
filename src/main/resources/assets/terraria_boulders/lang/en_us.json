@@ -1,4 +1,6 @@
 {
+  "effect.terraria_boulders.choking": "Choking",
+  "message.terraria_boulders.choking": "You're choking and need to drink water",
   "terraria_boulders.subtitle.soul_death": "Spirit: Annihilate",
   "itemGroup.terraria_boulders.terraria_boulders": "Terraria Boulders",
   "block.terraria_boulders.boulder_bread_block": "Boulder Bread Block",
@@ -15,6 +17,7 @@
   "entity.terraria_boulders.boulder": "Boulder",
   "entity.terraria_boulders.explode_boulder": "Explode Boulder",
   "entity.terraria_boulders.follower_boulder": "Follower Boulder",
+  "block.terraria_boulders.follower_boulder": "Follower Boulder",
   "entity.terraria_boulders.rolling_cactus_boulder": "Rolling Cactus Boulder",
   "entity.terraria_boulders.ghoulder": "Ghoulder",
   "entity.terraria_boulders.spider_boulder": "Spider Boulder",
