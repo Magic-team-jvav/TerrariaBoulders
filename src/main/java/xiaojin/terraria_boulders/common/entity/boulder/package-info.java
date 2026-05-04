@@ -1,0 +1,3 @@
+@javax.annotation.ParametersAreNonnullByDefault
+@net.minecraft.MethodsReturnNonnullByDefault
+package xiaojin.terraria_boulders.common.entity.boulder;

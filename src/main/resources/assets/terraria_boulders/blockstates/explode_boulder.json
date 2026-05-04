@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "terraria_boulders:block/explode_boulder"
+        }
+    }
+}

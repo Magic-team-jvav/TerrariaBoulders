@@ -1,0 +1,7 @@
+{
+    "parent": "terraria_boulders:block/boulder",
+    "textures": {
+        "0": "terraria_boulders:block/boulder/follower_boulder",
+        "particle": "terraria_boulders:block/boulder/follower_boulder"
+    }
+}
