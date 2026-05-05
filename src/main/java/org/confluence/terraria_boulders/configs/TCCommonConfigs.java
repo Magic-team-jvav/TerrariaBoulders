@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntSortedMap;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.fml.ModContainer;
@@ -30,7 +30,7 @@ public final class TCCommonConfigs {
         Object2IntSortedMap<BlockState> blockStates = new Object2IntLinkedOpenHashMap<>();
         RARE_BLOCKS.get().forEach(s -> {
             try {
-                blockStates.put(BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), s, false).blockState(), blockStates.size());
+                blockStates.put(BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.freeze(), s, false).blockState(), blockStates.size());
             } catch (Exception e) {
                 TerrariaBoulders.LOGGER.warn("BlockState {} not found", s);
             }
@@ -39,7 +39,7 @@ public final class TCCommonConfigs {
 
         Object2IntSortedMap<EntityType<?>> entityTypes = new Object2IntLinkedOpenHashMap<>();
         RARE_CREATURES.get().forEach(s -> {
-            ResourceLocation id = ResourceLocation.parse(s);
+            Identifier id = Identifier.parse(s);
             BuiltInRegistries.ENTITY_TYPE.getOptional(id).ifPresentOrElse(
                     entityType -> entityTypes.put(entityType, entityTypes.size()),
                     () -> TerrariaBoulders.LOGGER.warn("EntityType {} not found", id)

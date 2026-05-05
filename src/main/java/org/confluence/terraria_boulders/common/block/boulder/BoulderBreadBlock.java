@@ -24,12 +24,12 @@ public class BoulderBreadBlock extends Block {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (player.hasEffect(ModEffects.CHOKING)) {
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 player.sendSystemMessage(Component.translatable("message.terraria_boulders.choking"));
             }
             return InteractionResult.FAIL;
         }
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             InteractionResult result = eat(level, pos, player);
             if (result.consumesAction()) return InteractionResult.SUCCESS;
             if (player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
@@ -43,7 +43,7 @@ public class BoulderBreadBlock extends Block {
         if (!player.canEat(false)) return InteractionResult.PASS;
         player.getFoodData().eat(20, 10.0F);
         player.addEffect(new MobEffectInstance(ModEffects.CHOKING, 6000));
-        player.playSound(SoundEvents.GENERIC_EAT);
+        player.playSound(SoundEvents.GENERIC_EAT.value());
         level.gameEvent(player, GameEvent.EAT, pos);
         level.removeBlock(pos, false);
         level.gameEvent(player, GameEvent.BLOCK_DESTROY, pos);

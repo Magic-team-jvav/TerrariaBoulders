@@ -33,7 +33,7 @@ public final class ModDamageTypes {
     }
 
     private static void damageType(BootstrapContext<DamageType> context, ResourceKey<DamageType> key, DamageScaling scaling, float exhaustion, DamageEffects effects, DeathMessageType deathMessageType) {
-        context.register(key, new DamageType(key.location().getPath(), scaling, exhaustion, effects, deathMessageType));
+        context.register(key, new DamageType(key.identifier().getPath(), scaling, exhaustion, effects, deathMessageType));
     }
 
     private static void damageType(BootstrapContext<DamageType> context, ResourceKey<DamageType> key, DamageScaling scaling, float exhaustion, DamageEffects effects) {

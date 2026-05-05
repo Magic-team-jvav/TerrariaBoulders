@@ -2,12 +2,14 @@ package org.confluence.terraria_boulders.common.entity.boulder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.LavaFluid;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
@@ -31,7 +33,8 @@ public class LavaBoulderEntity extends BoulderEntity {
         final int blockRadius = 2;
         final BlockState toFill = Fluids.LAVA.defaultFluidState().createLegacyBlock();
 
-        if (!serverLevel.dimensionType().ultraWarm() || toFill.getFluidState().getType().getFluidType() != NeoForgeMod.WATER_TYPE.value()) {
+        if (!serverLevel.environmentAttributes().getDimensionValue(EnvironmentAttributes.FAST_LAVA) ||
+                toFill.getFluidState().getType().getFluidType() != NeoForgeMod.WATER_TYPE.value()) {
             BlockPos blockPos = blockPosition();
             BlockPos.MutableBlockPos mutable = blockPos.mutable();
             for (int i = -blockRadius; i < blockRadius; i++) {

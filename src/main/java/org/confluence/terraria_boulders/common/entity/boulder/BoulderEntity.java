@@ -22,6 +22,8 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -67,7 +69,7 @@ public class BoulderEntity extends Projectile {
     public double frictionFactor = 0.9;
     public int generation = 0; // 分裂代数，0为原始巨石
 
-    protected int stillTickCount; // 静止刻计时
+    public int stillTickCount; // 静止刻计时
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -99,14 +101,17 @@ public class BoulderEntity extends Projectile {
     }
 
     /// 移除前触发的效果
-    protected void removeEffect(ServerLevel serverLevel) {}
+    protected void removeEffect(ServerLevel serverLevel) {
+    }
 
     protected void sendRemoveParticle(ServerLevel serverLevel, BlockPos pos) {
-        serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, getBlockState()).setPos(pos), getX(), getY() + radius, getZ(), 175, 0.0, 0.0, 0.0, 0.15);
+        serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, getBlockState(), pos), getX(), getY() + radius, getZ(), 175, 0.0, 0.0, 0.0, 0.15);
     }
 
     protected void playRemoveSound(ServerLevel serverLevel, BlockPos pos) {
-        serverLevel.playSound(null, pos, getBlockState().getSoundType().getBreakSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
+        serverLevel.playSound(null, pos, getBlockState()
+                .getSoundType(serverLevel, pos, this)
+                .getBreakSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
     @Override
@@ -161,7 +166,8 @@ public class BoulderEntity extends Projectile {
                 }
             }
             case EntityHitResult entityHitResult -> onHitEntity(entityHitResult);
-            default -> {}
+            default -> {
+            }
         }
     }
 
@@ -173,7 +179,7 @@ public class BoulderEntity extends Projectile {
         deltaMovement = getDeltaMovement();
         move(MoverType.SELF, deltaMovement);
 
-        if (level().isClientSide) {
+        if (level().isClientSide()) {
             return;
         }
 
@@ -236,7 +242,7 @@ public class BoulderEntity extends Projectile {
             Player nearestPlayer = getNearestPlayer();
             if (nearestPlayer == null) {
                 // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
-                if (!level.isClientSide) {
+                if (!level.isClientSide()) {
                     List<Direction> directions = new ArrayList<>();
                     for (Direction direction1 : Direction.Plane.HORIZONTAL) {
                         Vec3 position = position();
@@ -310,29 +316,30 @@ public class BoulderEntity extends Projectile {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
-        entityData.set(DATA_BLOCK_STATE, BlockState.CODEC.parse(NbtOps.INSTANCE, tag.get("BlockState")).getOrThrow());
-        tickCount = tag.getInt("Age");
-        stillTickCount = tag.getInt("StillAge");
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        entityData.set(DATA_BLOCK_STATE, input.read("BlockState", BlockState.CODEC).orElseGet(() -> ModBlocks.BOULDER.get().defaultBlockState()));
+        tickCount = input.getIntOr("Age", 0);
+        stillTickCount = input.getIntOr("StillAge", 0);
 
-        if (tag.contains("Radius")) radius = tag.getFloat("Radius");
-        if (tag.contains("MaxRemoveTick")) maxRemoveTick = tag.getInt("MaxRemoveTick");
-        if (tag.contains("MaxStillTick")) maxStillTick = tag.getInt("MaxStillTick");
-        if (tag.contains("Speed")) speed = tag.getDouble("Speed");
-        if (tag.contains("MinRemoveSpeed")) minRemoveSpeed = tag.getDouble("MinRemoveSpeed");
-        if (tag.contains("Generation")) generation = tag.getInt("Generation");
+        radius = input.getFloatOr("Radius", 0.5F);
+        maxRemoveTick = input.getIntOr("MaxRemoveTick", 1200);
+        maxStillTick = input.getIntOr("MaxStillTick", 20);
+        speed = input.getDoubleOr("Speed", 0.7);
+        minRemoveSpeed = input.getDoubleOr("MinRemoveSpeed", 0.007);
+        generation = input.getIntOr("Generation", 0);
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.put("BlockState", BlockState.CODEC.encodeStart(NbtOps.INSTANCE, entityData.get(DATA_BLOCK_STATE)).getOrThrow());
-        tag.putInt("Age", tickCount);
-        tag.putInt("StillAge", stillTickCount);
-        tag.putFloat("Radius", radius);
-        tag.putInt("MaxRemoveTick", maxRemoveTick);
-        tag.putInt("MaxStillTick", maxStillTick);
-        tag.putDouble("Speed", speed);
-        tag.putDouble("MinRemoveSpeed", minRemoveSpeed);
-        tag.putInt("Generation", generation);
+    protected void addAdditionalSaveData(ValueOutput output) {
+        output.store("BlockState", BlockState.CODEC, entityData.get(DATA_BLOCK_STATE));
+        output.putInt("Age", tickCount);
+        output.putInt("StillAge", stillTickCount);
+        output.putFloat("Radius", radius);
+        output.putInt("MaxRemoveTick", maxRemoveTick);
+        output.putInt("MaxStillTick", maxStillTick);
+        output.putDouble("Speed", speed);
+        output.putDouble("MinRemoveSpeed", minRemoveSpeed);
+        output.putInt("Generation", generation);
     }
 }

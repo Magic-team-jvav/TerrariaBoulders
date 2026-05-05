@@ -3,6 +3,7 @@ package org.confluence.terraria_boulders.util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.ServerExplosion;
 
 @javax.annotation.ParametersAreNonnullByDefault
 public class MultiplyExplosionDamageCalculator extends ExplosionDamageCalculator {
@@ -12,8 +13,8 @@ public class MultiplyExplosionDamageCalculator extends ExplosionDamageCalculator
         this.multiplier = multiplier;
     }
 
-    @Override
     public float getEntityDamageAmount(Explosion explosion, Entity entity) {
-        return super.getEntityDamageAmount(explosion, entity) * multiplier;
+        return super.getEntityDamageAmount(explosion, entity, ServerExplosion.getSeenPercent(explosion.center(), entity)) * multiplier;
     }
+
 }

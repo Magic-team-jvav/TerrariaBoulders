@@ -3,7 +3,7 @@ package org.confluence.terraria_boulders;
 import net.minecraft.core.Registry;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -43,8 +43,8 @@ public class TerrariaBoulders {
     }
 
     @Contract("_ -> new")
-    public static @NotNull ResourceLocation modRl(final String name) {
-        return ResourceLocation.fromNamespaceAndPath(ID, name);
+    public static @NotNull Identifier modRl(final String name) {
+        return Identifier.fromNamespaceAndPath(ID, name);
     }
 
     @Contract(pure = true)

@@ -25,7 +25,7 @@ public class ExplodeBoulderEntity extends BoulderEntity {
         super.onHitEntity(entityHitResult);
         Entity entity = entityHitResult.getEntity();
         Level level = this.level();
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             explode(level, entity.getX(), entity.getY(), entity.getZ());
         }
         onRemove();
@@ -34,7 +34,7 @@ public class ExplodeBoulderEntity extends BoulderEntity {
     @Override
     protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
         Level level = this.level();
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             Vec3 pos = blockHitResult.getLocation();
             explode(level, pos.x, pos.y, pos.z);
         }

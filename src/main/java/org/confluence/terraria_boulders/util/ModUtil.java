@@ -11,6 +11,6 @@ public final class ModUtil {
         return a == b ? (BlockEntityTicker<A>) ticker : null;
     }
     public static boolean isSingleplayerOwner(ServerPlayer player) {
-        return player.server.isSingleplayerOwner(player.getGameProfile());
+        return player.server.isSingleplayerOwner(player.nameAndId());
     }
 }

@@ -68,10 +68,10 @@ public class RollingCactusBoulderEntity extends BoulderEntity {
             Vec3 motion = getDeltaMovement();
             if (motion.x != vec3.x || motion.y != vec3.y || motion.z != vec3.z) {
                 discard();
-            } else if (!level().isClientSide) {
+            } else if ((level() instanceof ServerLevel serverLevel)) {
                 if (ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity) instanceof EntityHitResult entityHitResult) {
                     Entity entity = entityHitResult.getEntity();
-                    if (entity.hurt(damageSources().cactus(), 8.0F)) {
+                    if (entity.hurtServer(serverLevel, damageSources().cactus(), 8.0F)) {
                         VectorUtils.knockBackA2B(this, entity, 1.0, 0.2);
                     }
                 }

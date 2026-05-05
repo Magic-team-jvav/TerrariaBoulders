@@ -9,6 +9,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -51,8 +52,8 @@ public class BoulderBlock extends Block {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        super.onRemove(state, level, pos, newState, movedByPiston);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
         summon(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
     }
 
@@ -62,15 +63,16 @@ public class BoulderBlock extends Block {
     }
 
     @Override
-    public void neighborChanged(BlockState pState, Level pLevel, BlockPos pPos, Block pNeighborBlock, BlockPos pNeighborPos, boolean pMovedByPiston) {
-        if (pLevel.isClientSide) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        if (level.isClientSide()) {
             return;
         }
-        if (pLevel.hasNeighborSignal(pPos)) {
+        if (level.hasNeighborSignal(pos)) {
             return;
         }
-        BlockState below = pLevel.getBlockState(pPos.below());
-        if (below.isAir()) onExecute(pState, (ServerLevel) pLevel, pPos);
+        BlockState below = level.getBlockState(pos.below());
+        if (below.isAir()) onExecute(state, (ServerLevel) level, pos);
     }
 
     public void onExecute(BlockState state, ServerLevel level, BlockPos pos) {

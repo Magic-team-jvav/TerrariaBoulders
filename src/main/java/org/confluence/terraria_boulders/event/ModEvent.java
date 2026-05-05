@@ -1,9 +1,10 @@
 package org.confluence.terraria_boulders.event;
 
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -14,6 +15,7 @@ import org.confluence.terraria_boulders.client.model.RollingCactusSpikeModel;
 import org.confluence.terraria_boulders.client.renderer.BoulderRenderer;
 import org.confluence.terraria_boulders.client.renderer.RainbowBoulderRenderer;
 import org.confluence.terraria_boulders.client.renderer.RollingCactusSpikeRenderer;
+import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEffects;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 
@@ -48,6 +50,20 @@ public class ModEvent {
         ItemStack item = event.getItem();
         if (item.is(Tags.Items.DRINKS_WATER) || item.is(Tags.Items.DRINKS_WATERY)) {
             event.getEntity().removeEffect(ModEffects.CHOKING);
+        }
+    }
+
+    @SubscribeEvent
+    public static void modConfig$Loading(ModConfigEvent.Loading event) {
+        if (event.getConfig().getType() == ModConfig.Type.COMMON && TerrariaBoulders.ID.equals(event.getConfig().getModId())) {
+            TCCommonConfigs.onLoad();
+        }
+    }
+
+    @SubscribeEvent
+    public static void modConfig$Reloading(ModConfigEvent.Reloading event) {
+        if (event.getConfig().getType() == ModConfig.Type.COMMON && TerrariaBoulders.ID.equals(event.getConfig().getModId())) {
+            TCCommonConfigs.onLoad();
         }
     }
 }

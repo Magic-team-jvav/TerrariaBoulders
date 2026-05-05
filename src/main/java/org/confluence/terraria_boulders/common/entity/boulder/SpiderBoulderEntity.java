@@ -2,8 +2,9 @@ package org.confluence.terraria_boulders.common.entity.boulder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.spider.Spider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -37,7 +38,7 @@ public class SpiderBoulderEntity extends BoulderEntity {
         super.removeEffect(serverLevel);
         // TODO 补充WALL_CREEPER
 //        serverLevel.addFreshEntity(ModEntityTypes.WALL_CREEPER);
-        Spider entity = EntityType.SPIDER.create(serverLevel);
+        Spider entity = EntityType.SPIDER.create(serverLevel,EntitySpawnReason.MOB_SUMMONED);
         if (entity != null) {
             entity.setPos(position());
             serverLevel.addFreshEntity(entity);

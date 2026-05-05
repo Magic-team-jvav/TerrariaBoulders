@@ -56,6 +56,6 @@ public final class ModEntityTypes {
                     .clientTrackingRange(6));
 
     private static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, Supplier<EntityType.Builder<T>> builder) {
-        return REGISTER.register(name, () -> builder.get().build(TerrariaBoulders.modRlText(name)));
+        return REGISTER.register(name, () -> builder.get().build(TerrariaBoulders.modResourceKey(Registries.ENTITY_TYPE, name)));
     }
 }

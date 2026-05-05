@@ -13,7 +13,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.Nullable;
-import org.confluence.terraria_boulders.client.DebugBlocksHelper;
 import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.confluence.terraria_boulders.util.IntegerRGB;
@@ -129,11 +128,11 @@ public class RainbowBoulderEntity extends BoulderEntity {
                 });
             }
 
-            if (!cachedEnemies.isEmpty() && (cachedRareBlocks.isEmpty() || level().random.nextBoolean())) {
-                target = cachedEnemies.get(level().random.nextInt(cachedEnemies.size()));
+            if (!cachedEnemies.isEmpty() && (cachedRareBlocks.isEmpty() || level().getRandom().nextBoolean())) {
+                target = cachedEnemies.get(level().getRandom().nextInt(cachedEnemies.size()));
                 targetTo((Entity) target);
             } else if (!cachedRareBlocks.isEmpty()) {
-                BlockPos pos = cachedRareBlocks.get(level().random.nextInt(cachedRareBlocks.size()));
+                BlockPos pos = cachedRareBlocks.get(level().getRandom().nextInt(cachedRareBlocks.size()));
                 targetPos = pos.immutable();
                 target = level().getBlockState(pos);
                 targetToBlock(pos);
@@ -154,7 +153,7 @@ public class RainbowBoulderEntity extends BoulderEntity {
 
             BlockHitResult blockHit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
             if (blockHit.getType() != HitResult.Type.MISS) {
-                if (level().random.nextFloat() < 0.3f) {
+                if (level().getRandom().nextFloat() < 0.3f) {
                     onHitBlock(blockHit);
                 }
             }
@@ -185,8 +184,8 @@ public class RainbowBoulderEntity extends BoulderEntity {
     protected void onHitBlock(BlockHitResult blockHitResult) {
         super.onHitBlock(blockHitResult);
         Direction direction = blockHitResult.getDirection();
-        float x = (level().random.nextBoolean() ? 1 : -1) * (level().random.nextFloat() * 0.5f + 0.5f);
-        float z = (level().random.nextBoolean() ? 1 : -1) * (level().random.nextFloat() * 0.5f + 0.5f);
+        float x = (level().getRandom().nextBoolean() ? 1 : -1) * (level().getRandom().nextFloat() * 0.5f + 0.5f);
+        float z = (level().getRandom().nextBoolean() ? 1 : -1) * (level().getRandom().nextFloat() * 0.5f + 0.5f);
         if (direction == Direction.UP) {
             setDeltaMovement(x, 1.5f, z);
         } else if (direction == Direction.DOWN) {
@@ -197,8 +196,8 @@ public class RainbowBoulderEntity extends BoulderEntity {
         }
         if (targetPos != null){
             if (targetPos.equals(blockHitResult.getBlockPos())) {
-                IntegerRGB rgb = IntegerRGB.of(getGlowingColor());
-                DebugBlocksHelper.Singleton().addDebugBlock(targetPos, new DebugBlocksHelper.DebugInfo(rgb.red(), rgb.green(), rgb.blue(), 200));
+//                IntegerRGB rgb = IntegerRGB.of(getGlowingColor());
+//                DebugBlocksHelper.Singleton().addDebugBlock(targetPos, new DebugBlocksHelper.DebugInfo(rgb.red(), rgb.green(), rgb.blue(), 200));
             }
         }
         target = null;
@@ -216,7 +215,7 @@ public class RainbowBoulderEntity extends BoulderEntity {
     }
 
     private void saveTrailPos() {
-        if (this.level().isClientSide) {
+        if (this.level().isClientSide()) {
             Vec3 currentPos = this.position();
 
             if (trails.isEmpty()) {

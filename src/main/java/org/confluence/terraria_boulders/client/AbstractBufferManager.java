@@ -1,27 +1,31 @@
+/*
 package org.confluence.terraria_boulders.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 
 import java.util.function.Supplier;
 
+*/
 /**
  * 用于管理缓冲区的抽象类
- */
+ *//*
+
 public abstract class AbstractBufferManager {
     protected VertexBuffer vertexBuffer;
     protected long lastRefreshTime = 0;
     protected final int refreshInterval;
 
-    /**
+    */
+/**
      * @param refreshTime 刷新间隔，单位毫秒
-     */
+     *//*
+
     public AbstractBufferManager(int refreshTime) {
 //        vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         this.refreshInterval = refreshTime;
@@ -108,3 +112,4 @@ public abstract class AbstractBufferManager {
 
 
 }
+*/
