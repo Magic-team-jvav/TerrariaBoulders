@@ -1,8 +1,10 @@
 {
-    "soul_death": {
-        "sounds": [
-            "terra_entity:soul_death"
-        ],
-        "subtitle": "terraria_boulders.subtitle.soul_death"
-    }
+  "soul_death": {
+    "sounds": [
+      {
+        "name": "terra_entity:soul_death"
+      }
+    ],
+    "subtitle": "terraria_boulders.subtitle.soul_death"
+  }
 }

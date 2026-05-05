@@ -14,12 +14,8 @@ public class FullCollisionBoulderBlock extends BoulderBlock {
     // 完整 16x16x16 标准方块碰撞箱
     private static final VoxelShape FULL_BLOCK_SHAPE = Shapes.box(0, 0, 0, 1, 1, 1);
 
-    public FullCollisionBoulderBlock() {
-        this(BoulderEntity::new);
-    }
-
-    public FullCollisionBoulderBlock(BoulderFactory factory) {
-        this(Properties.of(), factory);
+    public FullCollisionBoulderBlock(Properties properties) {
+        super(properties);
     }
 
     public FullCollisionBoulderBlock(Properties properties, BoulderFactory factory) {

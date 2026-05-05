@@ -27,10 +27,6 @@ public class ContactEffectBoulderBlock extends BoulderBlock {
 
     protected final ContactEffect contactEffect;
 
-    public ContactEffectBoulderBlock(BoulderFactory factory, ContactEffect contactEffect) {
-        this(Properties.of(), factory, contactEffect);
-    }
-
     public ContactEffectBoulderBlock(Properties properties, BoulderFactory factory, ContactEffect contactEffect) {
         super(properties, factory);
         this.contactEffect = contactEffect;

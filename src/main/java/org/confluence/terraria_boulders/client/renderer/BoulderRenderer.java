@@ -4,7 +4,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 
-public class BoulderRenderer extends EntityRenderer<BoulderEntity, AbstractBoulderRenderer.BoulderRenderState> {
+public class BoulderRenderer extends AbstractBoulderRenderer<BoulderEntity, AbstractBoulderRenderer.BoulderRenderState> {
     public BoulderRenderer(EntityRendererProvider.Context context) {
         super(context);
     }

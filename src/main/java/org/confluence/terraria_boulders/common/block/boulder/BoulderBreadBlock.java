@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.PushReaction;
@@ -17,8 +18,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.confluence.terraria_boulders.init.ModEffects;
 
 public class BoulderBreadBlock extends Block {
-    public BoulderBreadBlock() {
-        super(Properties.of().pushReaction(PushReaction.DESTROY).strength(1.0f));
+    public BoulderBreadBlock(BlockBehaviour.Properties properties) {
+        super(properties.pushReaction(PushReaction.DESTROY).strength(1.0f));
     }
 
     @Override

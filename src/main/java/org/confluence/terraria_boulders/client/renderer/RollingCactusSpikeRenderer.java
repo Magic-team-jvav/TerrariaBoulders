@@ -43,29 +43,22 @@ public class RollingCactusSpikeRenderer extends EntityRenderer<RollingCactusBoul
         state.yRot = entity.getYRot();
         state.xRotO = entity.xRotO;
         state.xRot = entity.getXRot();
-        state.renderType = model.renderType(TEXTURE);
     }
 
     @Override
     public void submit(RollingCactusSpikeRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
         super.submit(state, poseStack, submitNodeCollector, camera);
-        BlockModelRenderState displayBlockModel = state.displayBlockModel;
-        if (displayBlockModel.isEmpty()) {
-            return;
-        }
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(state.partialTick, state.yRotO, state.yRot) - 180.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(state.partialTick, state.xRotO, state.xRot)));
-        submitNodeCollector.submitModel(model, state, poseStack, state.renderType, state.lightCoords, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
+        submitNodeCollector.submitModel(model, state, poseStack, model.renderType(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         poseStack.popPose();
     }
 
     public static class RollingCactusSpikeRenderState extends EntityRenderState {
-        public BlockModelRenderState displayBlockModel = new BlockModelRenderState();
         public float yRotO;
         public float xRotO;
         public float yRot;
         public float xRot;
-        public RenderType renderType;
     }
 }

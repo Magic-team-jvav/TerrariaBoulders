@@ -27,17 +27,12 @@ public class BoulderBlock extends Block {
             box(-0.1, 1.9, 1.9, 16.1, 14.1, 14.1),
             box(1.9, 1.9, -0.1, 14.1, 14.1, 16.1));
 
-
-    public BoulderBlock() {
-        this(BoulderEntity::new);
-    }
-
-    public BoulderBlock(BoulderFactory factory) {
-        this(Properties.of(), factory);
+    public BoulderBlock(Properties properties) {
+        this(properties, BoulderEntity::new);
     }
 
     public BoulderBlock(Properties properties, BoulderFactory factory) {
-        super(properties);
+        super(properties.noLootTable());
         this.factory = factory;
     }
 

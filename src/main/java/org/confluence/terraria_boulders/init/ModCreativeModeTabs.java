@@ -19,7 +19,6 @@ public final class ModCreativeModeTabs {
             "terraria_boulders", (name) ->
                     createCreativeModeTab(name, (parameters, output) -> {
                         addRegistryItem(ModItems.REGISTER, output);
-                        addRegistryItem(FoodItems.REGISTER, output);
                     }, ModBlocks.BOULDER::toStack));
 
     private static DeferredHolder<CreativeModeTab, CreativeModeTab> register(
