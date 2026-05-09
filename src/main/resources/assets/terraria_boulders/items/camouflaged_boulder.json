@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "minecraft:block/block",
+    "model": {
+      "type": "terraria_boulders:camouflaged_boulder"
+    }
+  }
+}

@@ -4,6 +4,7 @@
   "terraria_boulders.subtitle.soul_death": "Spirit: Annihilate",
   "itemGroup.terraria_boulders.terraria_boulders": "Terraria Boulders",
   "item.terraria_boulders.boulder_bread": "Boulder Bread Block",
+  "item.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder",
   "block.terraria_boulders.boulder_bread_block": "Boulder Bread Block",
   "block.terraria_boulders.ghoulder": "Ghoulder",
   "block.terraria_boulders.spider_boulder": "Spider Boulder",
@@ -14,16 +15,18 @@
   "block.terraria_boulders.boulder": "Boulder",
   "block.terraria_boulders.oak_log_boulder": "Oak Log Boulder",
   "block.terraria_boulders.rolling_cactus_boulder": "Rolling Cactus Boulder",
+  "block.terraria_boulders.follower_boulder": "Follower Boulder",
+  "block.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder",
   "death.attack.boulder": "%1$s is crushed by boulder",
   "entity.terraria_boulders.boulder": "Boulder",
   "entity.terraria_boulders.explode_boulder": "Explode Boulder",
   "entity.terraria_boulders.follower_boulder": "Follower Boulder",
-  "block.terraria_boulders.follower_boulder": "Follower Boulder",
   "entity.terraria_boulders.rolling_cactus_boulder": "Rolling Cactus Boulder",
   "entity.terraria_boulders.ghoulder": "Ghoulder",
   "entity.terraria_boulders.spider_boulder": "Spider Boulder",
   "entity.terraria_boulders.rainbow_boulder": "Rainbow Boulder",
   "entity.terraria_boulders.bouncy_boulder": "Bouncy Boulder",
   "entity.terraria_boulders.lava_boulder": "Lava Boulder",
-  "entity.terraria_boulders.oak_log_boulder": "Oak Log Boulder"
+  "entity.terraria_boulders.oak_log_boulder": "Oak Log Boulder",
+  "entity.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder"
 }

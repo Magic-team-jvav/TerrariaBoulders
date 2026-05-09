@@ -54,6 +54,10 @@ public final class ModEntityTypes {
             EntityType.Builder.<RainbowBoulderEntity>of(RainbowBoulderEntity::new, MobCategory.MISC)
                     .sized(1, 1)
                     .clientTrackingRange(6));
+    public static final DeferredHolder<EntityType<?>, EntityType<CamouflagedBoulderEntity>> CAMOUFLAGED_BOULDER = register("camouflaged_boulder", () ->
+            EntityType.Builder.<CamouflagedBoulderEntity>of(CamouflagedBoulderEntity::new, MobCategory.MISC)
+                    .sized(1, 1)
+                    .clientTrackingRange(6));
 
     private static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, Supplier<EntityType.Builder<T>> builder) {
         return REGISTER.register(name, () -> builder.get().build(TerrariaBoulders.modResourceKey(Registries.ENTITY_TYPE, name)));

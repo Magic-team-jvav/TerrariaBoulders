@@ -9,10 +9,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
-import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
-import org.confluence.terraria_boulders.common.block.boulder.BoulderBreadBlock;
-import org.confluence.terraria_boulders.common.block.boulder.ContactEffectBoulderBlock;
-import org.confluence.terraria_boulders.common.block.boulder.FullCollisionBoulderBlock;
+import org.confluence.terraria_boulders.common.block.boulder.*;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
 
 import java.util.function.Function;
@@ -45,6 +42,11 @@ public final class ModBlocks {
             new BoulderBlock(p, RainbowBoulderEntity::new));
 
     public static final DeferredBlock<BoulderBreadBlock> BOULDER_BREAD_BLOCK = register("boulder_bread_block", BoulderBreadBlock::new);
+    //伪装巨石
+//    public static final DeferredBlock<CamouflagedBoulderBlock> CAMOUFLAGED_BOULDER = register("camouflaged_boulder",
+//            (props) -> new CamouflagedBoulderBlock(props.noOcclusion())
+//    );
+    public static final DeferredBlock<CamouflagedBoulderBlock> CAMOUFLAGED_BOULDER = register("camouflaged_boulder", CamouflagedBoulderBlock::new);
 
     private static <B extends Block> DeferredBlock<B> register(String id, Function<BlockBehaviour.Properties, B> supplier) {
         return REGISTER.registerBlock(id, supplier);

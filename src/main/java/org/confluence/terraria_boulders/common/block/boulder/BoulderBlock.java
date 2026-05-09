@@ -43,7 +43,10 @@ public class BoulderBlock extends Block {
 
     @Override
     public void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
-        level.removeBlock(hit.getBlockPos(), false);
+        //统一调用触发逻辑
+        if (level instanceof ServerLevel serverLevel) {
+            onExecute(state, serverLevel, hit.getBlockPos());
+        }
     }
 
     @Override
@@ -67,20 +70,35 @@ public class BoulderBlock extends Block {
             return;
         }
         BlockState below = level.getBlockState(pos.below());
-        if (below.isAir()) onExecute(state, (ServerLevel) level, pos);
+
+        if (below.isAir() && level instanceof ServerLevel serverLevel) {
+            onExecute(state, serverLevel, pos);
+        }
     }
 
+    /**
+     * 统一的滚动触发点：负责移除方块并触发后续的召唤
+     */
     public void onExecute(BlockState state, ServerLevel level, BlockPos pos) {
         level.removeBlock(pos, false);
     }
 
-    protected void summon(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
-        BoulderEntity entity = factory.create(level, pos.getCenter(), blockState);
+    protected <T extends BoulderEntity> void summon(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
+        @SuppressWarnings("unchecked")
+        T entity = (T) factory.create(level, pos.getCenter(), blockState);
         if (!level.getBlockState(pos.below()).isAir()) {
             entity.targetTo(function.apply(entity));
         }
         level.addFreshEntity(entity);
     }
+//    protected void summon(Level level, BlockPos pos, BlockState blockState, Function<? super BoulderEntity, Player> function) {
+//        BoulderEntity entity = factory.create(level, pos.getCenter(), blockState);
+//        if (!level.getBlockState(pos.below()).isAir()) {
+//            entity.targetTo(function.apply(entity));
+//        }
+//        level.addFreshEntity(entity);
+//    }
+
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
@@ -91,4 +109,17 @@ public class BoulderBlock extends Block {
     public interface BoulderFactory {
         BoulderEntity create(Level level, Vec3 position, BlockState blockState);
     }
+
+//    public abstract class BoulderSummoner<T extends BoulderEntity> {
+//        //让子类提供具体的Factory
+//        protected abstract T createEntity(Level level, BlockPos pos, BlockState blockState);
+//        protected void summon(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
+//            //调用子类实现的创建逻辑，拿到具体的 T
+//            T entity = createEntity(level, pos, blockState);
+//            if (!level.getBlockState(pos.below()).isAir()) {
+//                entity.targetTo(function.apply(entity));
+//            }
+//            level.addFreshEntity(entity);
+//        }
+//    }
 }

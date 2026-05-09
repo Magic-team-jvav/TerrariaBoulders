@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.confluence.terraria_boulders.init.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +28,15 @@ public class TerrariaBoulders {
     public TerrariaBoulders(IEventBus modEventBus, ModContainer modContainer) {
         ModConfigs.register(modContainer);
         NeoForge.EVENT_BUS.register(this);
+        ModBlocks.REGISTER.register(modEventBus);
+        ModDataComponents.REGISTER.register(modEventBus);
         ModSounds.REGISTER.register(modEventBus);
         ModEffects.REGISTER.register(modEventBus);
-        ModEntityTypes.REGISTER.register(modEventBus);
-        ModBlocks.REGISTER.register(modEventBus);
-        ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModItems.REGISTER.register(modEventBus);
         ModCreativeModeTabs.REGISTRY.register(modEventBus);
+        ModBlockEntityTypes.REGISTER.register(modEventBus);
+        ModEntityTypes.REGISTER.register(modEventBus);
+        //ModClientEvent.REGISTER.register(modEventBus);
     }
 
     @SubscribeEvent

@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
+import org.jspecify.annotations.NonNull;
 
 public class FullCollisionBoulderBlock extends BoulderBlock {
 
@@ -24,6 +24,7 @@ public class FullCollisionBoulderBlock extends BoulderBlock {
 
     // 覆盖碰撞箱 → 使用完整方块
     @Override
+    @NonNull
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
         return FULL_BLOCK_SHAPE;
     }

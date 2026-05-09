@@ -20,6 +20,7 @@ import org.confluence.terraria_boulders.common.block.boulder.BoulderBreadBlock;
 import org.confluence.terraria_boulders.common.block.boulder.ContactEffectBoulderBlock;
 import org.confluence.terraria_boulders.common.block.boulder.FullCollisionBoulderBlock;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
+import org.confluence.terraria_boulders.common.item.CamouflagedBoulderItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,10 @@ public final class ModItems {
                     .animation(ItemUseAnimation.EAT)
                     .consumeSeconds(48)
                     .build()), ModBlocks.BOULDER_BREAD_BLOCK.getDelegate());
+    public static final DeferredItem<CamouflagedBoulderItem> CAMOUFLAGED_BOULDER =
+            REGISTER.registerItem("camouflaged_boulder",
+                    (properties) -> new CamouflagedBoulderItem(ModBlocks.CAMOUFLAGED_BOULDER.get(), properties));//伪装巨石
+
 
     public static DeferredItem<BlockItem> registerBlockItemFood(String name, Item.Properties properties, Holder<? extends Block> block) {
         return REGISTER.registerItem(name, (properties1) -> new BlockItem(block.value(), properties1), () -> properties);

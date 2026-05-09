@@ -1,6 +1,11 @@
 package org.confluence.terraria_boulders.event;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.config.ModConfig;
@@ -8,13 +13,13 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.RollingCactusSpikeModel;
-import org.confluence.terraria_boulders.client.renderer.BoulderRenderer;
-import org.confluence.terraria_boulders.client.renderer.RainbowBoulderRenderer;
-import org.confluence.terraria_boulders.client.renderer.RollingCactusSpikeRenderer;
+import org.confluence.terraria_boulders.client.renderer.*;
+import org.confluence.terraria_boulders.common.block.boulder.CamouflagedBoulderBlock;
 import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEffects;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
@@ -38,6 +43,7 @@ public class ModEvent {
         event.registerEntityRenderer(ModEntityTypes.LAVA_BOULDER.get(), BoulderRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SPIDER_BOULDER.get(), BoulderRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.RAINBOW_BOULDER.get(), RainbowBoulderRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderRenderer::new);
     }
 
     @SubscribeEvent
@@ -64,6 +70,36 @@ public class ModEvent {
     public static void modConfig$Reloading(ModConfigEvent.Reloading event) {
         if (event.getConfig().getType() == ModConfig.Type.COMMON && TerrariaBoulders.ID.equals(event.getConfig().getModId())) {
             TCCommonConfigs.onLoad();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onUseItemOnBlock(UseItemOnBlockEvent event) {
+        if (event.getUsePhase() == UseItemOnBlockEvent.UsePhase.ITEM_BEFORE_BLOCK) {
+            Level level = event.getLevel();
+            BlockPos pos = event.getPos();
+            BlockState state = level.getBlockState(pos);
+            Player player = event.getPlayer();
+            //目标是巨石
+            if (player != null && state.getBlock() instanceof CamouflagedBoulderBlock) {
+                //处于潜行状态
+                if (player.isShiftKeyDown()) {
+                    //手动触发方块逻辑
+                    InteractionResult result = state.useItemOn(
+                            event.getItemStack(),
+                            level,
+                            player,
+                            event.getHand(),
+                            event.getUseOnContext().getHitResult()
+                    );
+
+                    //useItemOn返回SUCCESS
+                    if (result.consumesAction()) {
+                        //不允许后续放置方块动作发生
+                        event.cancelWithResult(InteractionResult.SUCCESS);
+                    }
+                }
+            }
         }
     }
 }
