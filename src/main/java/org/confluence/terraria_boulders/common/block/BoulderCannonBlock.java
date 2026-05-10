@@ -20,7 +20,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -28,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -54,7 +54,12 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public BoulderCannonBlock(Properties properties) {
-        super(properties.noCollision());
+        super(properties
+                .mapColor(MapColor.METAL)
+                .strength(3.5F, 3.5F)
+                //.requiresCorrectToolForDrops()
+                .noCollision()
+        );
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false));
     }
 
@@ -70,6 +75,7 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
     }
 
     @Override
+    @NonNull
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
     }
@@ -85,7 +91,6 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         //获取放置者的当前视角
         float initialYaw = Mth.wrapDegrees(placer.getYRot());
         //float initialPitch = placer.getXRot();//放置时的俯仰角
-
         float initialPitch = 0f;//默认平射
 
         be.setCurrentYaw(initialYaw);
@@ -151,12 +156,12 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         return Objects.requireNonNull(super.getStateForPlacement(context)).setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
     }
 
-    @Override
-    @NonNull
-    public RenderShape getRenderShape(BlockState state) {
-        //取消json渲染
-        return RenderShape.MODEL;
-    }
+//    @Override
+//    @NonNull
+//    public RenderShape getRenderShape(BlockState state) {
+//        //取消json渲染
+//        return RenderShape.MODEL;
+//    }
 
     @Nullable
     @Override

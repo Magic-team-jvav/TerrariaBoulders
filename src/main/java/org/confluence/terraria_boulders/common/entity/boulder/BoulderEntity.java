@@ -24,10 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.common.ModDamageTypes;
 import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
@@ -116,27 +113,30 @@ public class BoulderEntity extends Projectile {
                 .getBreakSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
+    /**已重写*/
     @Override
     public void tick() {
         super.tick();
+
+        //预测方块碰撞（提前触发撞墙音效或碎裂）
+        checkBlockCollisionPrediction();
+
+        //撞击后如果破碎直接返回
+        if(this.isRemoved()) return;
+
+        //进行移动
+        Vec3 oldPos = this.position();//移动前的位置
         moveAndUpdateNeighbors();
+        Vec3 newPos = this.position();//移动后的位置
 
-        Vec3 deltaMovement = getDeltaMovement().scale(0.99);
-        setDeltaMovement(deltaMovement);
-        rotate(deltaMovement);
+        //计算真实物理位移
+        onHit(newPos.subtract(oldPos));
 
-        onHit(deltaMovement);
+        //摩擦力、旋转
+        applyFrictionAndRotation();
 
-        if (tickCount >= maxRemoveTick || getDeltaMovement().length() < minRemoveSpeed && stillTickCount == maxStillTick) {
-            onRemove();
-            return;
-        }
-
-        if (getDeltaMovement().length() < minRemoveSpeed) {
-            stillTickCount++;
-        } else {
-            stillTickCount = 0;
-        }
+        //管理生命周期
+        updateLifetime();
     }
 
     protected void rotate(Vec3 deltaMovement) {
@@ -148,27 +148,25 @@ public class BoulderEntity extends Projectile {
     }
 
     protected void onHit(Vec3 deltaMovement) {
-        deltaMovement = deltaMovement.add(Mth.sign(deltaMovement.x) * 1.2 * radius, Mth.sign(deltaMovement.y) * 1.2 * radius, Mth.sign(deltaMovement.z) * 1.2 * radius);
-        Vec3 start = position();
-        Vec3 end = start.add(deltaMovement);
-        HitResult hitResult = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        if (hitResult.getType() != HitResult.Type.MISS) {
-            end = hitResult.getLocation();
-        }
+        double actualSpeed = deltaMovement.length();
 
-        HitResult hitResult1 = ProjectileUtil.getEntityHitResult(level(), this, start, end, getBoundingBox().expandTowards(deltaMovement).inflate(1.0), this::canHitEntity);
-        if (hitResult1 != null) {
-            hitResult = hitResult1;
-        }
+        //移动或滚动才触发伤害
+        if (actualSpeed > 0.05D || this.rotateO - this.rotate != 0) {
+            //贴合实际运动轨迹的扫描框
+            AABB sweepBox = this.getBoundingBox().expandTowards(-deltaMovement.x, -deltaMovement.y, -deltaMovement.z)/*.inflate(0.01D)*/;
 
-        switch (hitResult) {
-            case BlockHitResult blockHitResult -> {
-                if (blockHitResult.getType() != HitResult.Type.MISS) {
-                    onHitBlock(blockHitResult);
+            //还原出移动前的位置，用于精确计算相对方向
+            Vec3 oldPos = this.position().subtract(deltaMovement);
+
+            //扫描轨迹上所有实体
+            for (Entity entity : level().getEntities(this, sweepBox, ENTITY_PREDICATE)) {
+
+                //只对巨石前方的实体造成伤害
+                Vec3 toEntity = entity.position().subtract(oldPos).normalize();
+
+                if (deltaMovement.normalize().dot(toEntity) > 0) {
+                    onHitEntity(new EntityHitResult(entity));//造成伤害
                 }
-            }
-            case EntityHitResult entityHitResult -> onHitEntity(entityHitResult);
-            default -> {
             }
         }
     }
@@ -198,6 +196,44 @@ public class BoulderEntity extends Projectile {
             if (blockState.getBlock() instanceof BoulderBlock block) {
                 block.onProjectileHit(level(), blockState, new BlockHitResult(blockPos.getCenter(), dir, blockPos, false), this);
             }
+        }
+    }
+
+    private void checkBlockCollisionPrediction() {
+        Vec3 start = position();
+        Vec3 intendedMove = getDeltaMovement();
+
+        //扫描方块，下一帧会不会撞墙
+        HitResult blockHit = level().clip(new ClipContext(start, start.add(intendedMove), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+
+        if (blockHit.getType() != HitResult.Type.MISS) {
+            onHitBlock((BlockHitResult) blockHit);
+        }
+    }
+
+    private void applyFrictionAndRotation() {
+        //衰减速度
+        Vec3 deltaMovement = getDeltaMovement().scale(0.99);
+        setDeltaMovement(deltaMovement);
+
+        //更新旋转弧度
+        rotate(deltaMovement);
+    }
+
+    //管理生命周期
+    protected void updateLifetime() {
+        double currentSpeed = getDeltaMovement().length();
+
+        //检查是否超时或静止太久
+        if (tickCount >= maxRemoveTick || currentSpeed < minRemoveSpeed && stillTickCount == maxStillTick) {
+            onRemove();
+            return;
+        }
+
+        if (currentSpeed < minRemoveSpeed) {
+            stillTickCount++;
+        } else {
+            stillTickCount = 0;
         }
     }
 

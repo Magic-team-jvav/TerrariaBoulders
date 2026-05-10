@@ -1,6 +1,5 @@
 package org.confluence.terraria_boulders.client.renderer;
 
-import net.minecraft.client.renderer.block.BlockModelResolver;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
 import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderEntity;

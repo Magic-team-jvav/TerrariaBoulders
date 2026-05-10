@@ -57,9 +57,9 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
     public void submit(BoulderCannonRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState) {
         poseStack.pushPose();
 
-        //将坐标移到方块中心，由于Blockbench的模型中心点通常在底面中心，所以 Y 轴只移 1.5 (原版模型通常倒置，所以经常伴随 180度翻转)
+        //将坐标移到方块中心，由于bb的模型中心点通常在底面中心，所以Y轴只移1.5(原版模型通常倒置，所以经常伴随 180度翻转)
         poseStack.translate(0.5D, 1.5D, 0.5D);
-        //BlockBench导出的Java模型默认上下颠倒的，翻转过来
+        //bb导出的Java模型默认上下颠倒的，翻转过来
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(state.getLerpYaw() + 180.0F));//应用角度
 
@@ -70,7 +70,7 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
 
         //底座
         collector.submitModelPart(
-                this.model.bb_main,         //模型根骨骼
+                this.model.bb_main,                 //模型根骨骼
                 poseStack,                           //当前矩阵栈
                 renderType,                          //渲染类型（+贴图）
                 state.lightCoords,                   //ackedLight

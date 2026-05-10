@@ -1,7 +1,12 @@
 package org.confluence.terraria_boulders.common.entity.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -60,8 +65,8 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     private static final float MIN_PITCH = -45.0F;
     private static final float MAX_PITCH = 45.0F;
     //遥控数据
-    public boolean isAimingMode = false;
-    public UUID controllerId = null;
+    //public boolean isAimingMode = false;
+    //public UUID controllerId = null;
     private int soundTicks = 0;
 
     public BoulderCannonBlockEntity(BlockPos worldPosition, BlockState blockState) {
@@ -94,24 +99,24 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     }
 
     //设置瞄准状态
-    public void setAimingMode(boolean aiming, UUID controllerId) {
-        if (aiming) {
-            this.isAimingMode = true;
-            this.controllerId = controllerId;
-        } else{
-            this.isAimingMode = false;
-            this.controllerId = null;
-        }
-    }
+//    public void setAimingMode(boolean aiming, UUID controllerId) {
+//        if (aiming) {
+//            this.isAimingMode = true;
+//            this.controllerId = controllerId;
+//        } else{
+//            this.isAimingMode = false;
+//            this.controllerId = null;
+//        }
+//    }
 
     //智能翻转状态
-    public void setAimingMode(UUID controllerId) {
-        if(this.isAimingMode){
-            setAimingMode(false, null);
-        } else{
-            setAimingMode(true, controllerId);
-        }
-    }
+//    public void setAimingMode(UUID controllerId) {
+//        if(this.isAimingMode){
+//            setAimingMode(false, null);
+//        } else{
+//            setAimingMode(true, controllerId);
+//        }
+//    }
 
     //调节炮口高度
 //    public void nextPitch(Level level, BlockPos pos, BlockState state){
@@ -276,12 +281,37 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         this.targetYaw = input.getFloatOr("TargetYaw", 0);
         this.setTargetPitch(input.getFloatOr("TargetPitch", 0));
 
-        //当current是初始值 0 的时候才去同步
+        //当current是初始值0的时候才去同步
         if (this.getCurrentYaw() == 0) {
             this.setCurrentYaw(input.getFloatOr("CurrentYaw", this.targetYaw));
             this.setCurrentPitch(input.getFloatOr("CurrentPitch", this.targetPitch));
         }
     }
+
+    //获取更新标签
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        //存进去发给客户端
+        tag.putFloat("CurrentYaw", this.currentYaw);
+        tag.putFloat("CurrentPitch", this.currentPitch);
+        tag.putFloat("TargetYaw", this.targetYaw);
+        tag.putFloat("TargetPitch", this.targetPitch);
+        return tag;
+    }
+
+    //获取更新数据包
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    //处理更新标签（在客户端接收到数据包时调用）
+    // 注意：NeoForge/Forge 有时会通过 loadAdditional 处理，但为了保险建议重写此方法
+//    @Override
+//    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+//        this.loadAdditional(tag, registries);
+//    }
 
     @Override
     public int getContainerSize() {

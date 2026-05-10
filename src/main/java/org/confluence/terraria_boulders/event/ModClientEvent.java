@@ -45,7 +45,7 @@ public class ModClientEvent {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        //vent.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);
+        //event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);
         event.registerEntityRenderer(ModEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntityTypes.BOULDER_CANNON.get(), BoulderCannonRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CANNON_SEAT.get(), NoopRenderer::new);

@@ -13,7 +13,7 @@ public class BoulderCannonRenderState extends BlockEntityRenderState {
     public float partialTicks;
 
     public float getLerpYaw() {
-        return Mth.lerp(partialTicks, yawO, yaw);
+        return Mth.rotLerp(partialTicks, yawO, yaw);
     }
 
     public float getLerpPitch() {
