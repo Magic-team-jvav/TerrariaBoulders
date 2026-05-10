@@ -36,8 +36,11 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
     @Override
     public void extractRenderState(BoulderCannonBlockEntity be, BoulderCannonRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(be, state, partialTicks, cameraPosition, breakProgress);
-        state.yaw = be.currentYaw;
-        state.pitch = be.currentPitch;
+        state.yaw = be.getCurrentYaw();
+        state.yawO = be.currentYawO;
+        state.pitch = be.getCurrentPitch();
+        state.pitchO = be.currentPitchO;
+        state.partialTicks = partialTicks;
 
         //提取装填状态
         state.isEmpty = be.getCannonAmmo().isEmpty();
@@ -58,7 +61,7 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
         poseStack.translate(0.5D, 1.5D, 0.5D);
         //BlockBench导出的Java模型默认上下颠倒的，翻转过来
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw + 180.0F));//应用角度
+        poseStack.mulPose(Axis.YP.rotationDegrees(state.getLerpYaw() + 180.0F));//应用角度
 
         //获取当前材质
         Identifier currentTexture = state.isEmpty ? TEXTURE_EMPTY : TEXTURE_LOADED;
@@ -68,11 +71,11 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
         //底座
         collector.submitModelPart(
                 this.model.bb_main,         //模型根骨骼
-                poseStack,                  //当前矩阵栈
-                renderType,                 //渲染类型（+贴图）
-                state.lightCoords,          //ackedLight
-                OverlayTexture.NO_OVERLAY,  //overlay
-                null                        //TextureAtlasSprite
+                poseStack,                           //当前矩阵栈
+                renderType,                          //渲染类型（+贴图）
+                state.lightCoords,                   //ackedLight
+                OverlayTexture.NO_OVERLAY,           //overlay
+                null                                 //TextureAtlasSprite
         );
 
         //在这里才旋转X，底座不受影响
@@ -88,7 +91,7 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
         poseStack.translate(pX, pY, pZ);
 
         //应用垂直旋转
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
+        poseStack.mulPose(Axis.XP.rotationDegrees(state.getLerpPitch()));
 
         //移回原位，使offset生效
         poseStack.translate(-pX, -pY, -pZ);

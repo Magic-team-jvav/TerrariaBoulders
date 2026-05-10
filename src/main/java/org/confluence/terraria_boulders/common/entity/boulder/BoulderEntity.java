@@ -42,9 +42,6 @@ import java.util.function.Predicate;
 
 public class BoulderEntity extends Projectile {
     public static final float SEARCH_RANGE = 31.5F;
-
-    private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE = SynchedEntityData.defineId(BoulderEntity.class, EntityDataSerializers.BLOCK_STATE);
-
     public static final Predicate<Entity> ENTITY_PREDICATE = entity -> {
         if (!entity.isAlive()) {
             return false;
@@ -54,6 +51,7 @@ public class BoulderEntity extends Projectile {
         }
         return true;
     };
+    private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE = SynchedEntityData.defineId(BoulderEntity.class, EntityDataSerializers.BLOCK_STATE);
     private final Object2IntOpenHashMap<UUID> hitHistory = new Object2IntOpenHashMap<>();
 
     public float rotateO = 0.0F;
@@ -83,6 +81,10 @@ public class BoulderEntity extends Projectile {
         super(entityType, level);
         setPos(pos);
         entityData.set(DATA_BLOCK_STATE, blockState);
+    }
+
+    protected static double getHorizontalVectorLength(Vec3 deltaMovement) {
+        return Math.sqrt(deltaMovement.x * deltaMovement.x + deltaMovement.z * deltaMovement.z);
     }
 
     public BlockState getBlockState() {
@@ -146,7 +148,7 @@ public class BoulderEntity extends Projectile {
     }
 
     protected void onHit(Vec3 deltaMovement) {
-        deltaMovement = deltaMovement.add(Mth.sign(deltaMovement.x) * radius, Mth.sign(deltaMovement.y) * radius, Mth.sign(deltaMovement.z) * radius);
+        deltaMovement = deltaMovement.add(Mth.sign(deltaMovement.x) * 1.2 * radius, Mth.sign(deltaMovement.y) * 1.2 * radius, Mth.sign(deltaMovement.z) * 1.2 * radius);
         Vec3 start = position();
         Vec3 end = start.add(deltaMovement);
         HitResult hitResult = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
@@ -187,10 +189,6 @@ public class BoulderEntity extends Projectile {
         if (motion.x != deltaMovement.x || motion.y != deltaMovement.y || motion.z != deltaMovement.z) {
             updateNeighbors();
         }
-    }
-
-    protected static double getHorizontalVectorLength(Vec3 deltaMovement) {
-        return Math.sqrt(deltaMovement.x * deltaMovement.x + deltaMovement.z * deltaMovement.z);
     }
 
     protected void updateNeighbors() {

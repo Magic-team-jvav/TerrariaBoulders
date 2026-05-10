@@ -5,8 +5,10 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -45,13 +47,18 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     //存储弹药（容量为1）
     private final NonNullList<ItemStack> cannonAmmo = NonNullList.withSize(this.CAPACITY, ItemStack.EMPTY);
     //当前炮管角度
-    public float currentYaw = 0;
-    public float currentPitch = 0;
+    private float currentYaw = 0;
+    public float currentYawO = 0;
+    private float currentPitch = 0;
+    public float currentPitchO = 0;
     //目标角度，玩家指向
     public float targetYaw = 0;
     public float targetPitch = 0;
     //旋转速度（per tick）
     private static final float ROTATION_SPEED = 5.0F;
+    //仰角限制
+    private static final float MIN_PITCH = -45.0F;
+    private static final float MAX_PITCH = 45.0F;
     //遥控数据
     public boolean isAimingMode = false;
     public UUID controllerId = null;
@@ -126,13 +133,16 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
 //    }
 
     public static void tick(Level level, BlockPos pos, BlockState state, BoulderCannonBlockEntity be) {
+        be.currentYawO = be.getCurrentYaw();
+        be.currentPitchO = be.getCurrentPitch();
+
         //角度没到位时执行移动和同步
-        float yawDelta = Mth.degreesDifference(be.currentYaw, be.targetYaw);
-        float pitchDelta = be.targetPitch - be.currentPitch; // Pitch 不需要处理 360 度环绕
+        float yawDelta = Mth.degreesDifference(be.getCurrentYaw(), be.targetYaw);
+        float pitchDelta = be.targetPitch - be.getCurrentPitch(); // Pitch 不需要处理 360 度环绕
 
         if (Math.abs(yawDelta) > 0.05f || Math.abs(pitchDelta) > 0.05f) {
-            be.currentYaw = wrapAndMove(be.currentYaw, be.targetYaw, ROTATION_SPEED);
-            be.currentPitch = wrapAndMove(be.currentPitch, be.targetPitch, ROTATION_SPEED);
+            be.setCurrentYaw(wrapAndMove(be.getCurrentYaw(), be.targetYaw, ROTATION_SPEED));
+            be.setCurrentPitch(wrapAndMove(be.getCurrentPitch(), be.targetPitch, ROTATION_SPEED));
 
             be.soundTicks++;
             //5tick检查一次
@@ -239,8 +249,8 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
 //        if (this.controllerId != null) {
 //            output.putUUID("ControllerId", this.controllerId);
 //        }
-        output.putFloat("CurrentYaw", this.currentYaw);
-        output.putFloat("CurrentPitch", this.currentPitch);
+        output.putFloat("CurrentYaw", this.getCurrentYaw());
+        output.putFloat("CurrentPitch", this.getCurrentPitch());
         output.putFloat("TargetYaw", this.targetYaw);
         output.putFloat("TargetPitch", this.targetPitch);
     }
@@ -264,12 +274,12 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
 
         //读取目标值
         this.targetYaw = input.getFloatOr("TargetYaw", 0);
-        this.targetPitch = input.getFloatOr("TargetPitch", 0);
+        this.setTargetPitch(input.getFloatOr("TargetPitch", 0));
 
         //当current是初始值 0 的时候才去同步
-        if (this.currentYaw == 0) {
-            this.currentYaw = input.getFloatOr("CurrentYaw", this.targetYaw);
-            this.currentPitch = input.getFloatOr("CurrentPitch", this.targetPitch);
+        if (this.getCurrentYaw() == 0) {
+            this.setCurrentYaw(input.getFloatOr("CurrentYaw", this.targetYaw));
+            this.setCurrentPitch(input.getFloatOr("CurrentPitch", this.targetPitch));
         }
     }
 
@@ -338,5 +348,25 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     public void clearContent() {
         this.cannonAmmo.clear();
         this.setChanged();
+    }
+
+    public float getCurrentYaw() {
+        return currentYaw;
+    }
+
+    public void setCurrentYaw(float currentYaw) {
+        this.currentYaw = currentYaw;
+    }
+
+    public float getCurrentPitch() {
+        return currentPitch;
+    }
+
+    public void setCurrentPitch(float currentPitch) {
+        this.currentPitch = Mth.clamp(currentPitch, -45, 10);
+    }
+
+    public void setTargetPitch(float targetPitch) {
+        this.targetPitch = Mth.clamp(targetPitch, -45, 10);
     }
 }

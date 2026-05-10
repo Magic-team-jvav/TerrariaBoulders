@@ -16,6 +16,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -30,6 +31,9 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
 import org.confluence.terraria_boulders.common.block.boulder.CamouflagedBoulderBlock;
 import org.confluence.terraria_boulders.common.entity.CannonSeatEntity;
@@ -50,7 +54,7 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public BoulderCannonBlock(Properties properties) {
-        super(properties.noOcclusion());
+        super(properties.noCollision());
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false));
     }
 
@@ -63,6 +67,11 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(@NonNull BlockPos pos, @NonNull BlockState state) {
         return new BoulderCannonBlockEntity(pos, state);
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
     }
 
     @Override
@@ -79,10 +88,10 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
 
         float initialPitch = 0f;//默认平射
 
-        be.currentYaw = initialYaw;
+        be.setCurrentYaw(initialYaw);
         be.targetYaw = initialYaw;
-        be.currentPitch = initialPitch;
-        be.targetPitch = initialPitch;
+        be.setCurrentPitch(initialPitch);
+        be.setTargetPitch(initialPitch);
 
         //标记更新，确保发给客户端
         be.setChanged();
@@ -242,14 +251,6 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
 
     /**
      * 具体的发射方法
-     *
-     * @param item
-     * @param level
-     * @param pos
-     * @param boulderItemStack
-     * @param boulderBlockItem
-     * @param blockState
-     * @param boulderBlock
      */
     protected void fire(Level level, BlockPos pos, ItemStack boulderItemStack, BlockItem boulderBlockItem, BlockState blockState, BoulderBlock boulderBlock) {
         if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
@@ -268,7 +269,7 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         }
 
         //获取朝向向量
-        Vec3 lookVec = Vec3.directionFromRotation(be.currentPitch, be.currentYaw);
+        Vec3 lookVec = Vec3.directionFromRotation(be.getCurrentPitch(), be.getCurrentYaw());
 
         //调整生成位置（大炮中心坐标 + 朝向向量 * 偏移距离（0.7格））
         Vec3 spawnPos = pos.getCenter().add(lookVec.scale(0.7D));
