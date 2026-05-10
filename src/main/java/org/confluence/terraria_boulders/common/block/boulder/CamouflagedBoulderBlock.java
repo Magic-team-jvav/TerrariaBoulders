@@ -1,6 +1,5 @@
 package org.confluence.terraria_boulders.common.block.boulder;
 
-import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,15 +18,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
-import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderBlockEntity;
+import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderEntity;
-import org.confluence.terraria_boulders.init.ModBlocks;
 import org.confluence.terraria_boulders.init.ModDataComponents;
-import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
@@ -36,37 +31,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implements EntityBlock {
-    //public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = () -> ModBlocks.CAMOUFLAGED_BOULDER.get().defaultBlockState();
     public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = Blocks.STONE::defaultBlockState;
-    private BlockState tempMimic = Blocks.STONE.defaultBlockState();
 
     public CamouflagedBoulderBlock(Properties properties) {
-        super(properties.noOcclusion());
+        super(properties.noOcclusion(), CamouflagedBoulderEntity::new);
     }
 
-    @Override
-    public void onExecute(BlockState state, ServerLevel level, BlockPos pos) {
-        saveMimic(state, level, pos);
-        //summon(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
-        super.onExecute(state, level, pos);
-    }
-
-    public void saveMimic(BlockState state, ServerLevel level, BlockPos pos) {
-        //在父类移除方块前先把数据存入临时变量
-        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
-            this.tempMimic = be.getMimicState();
-        } else {
-            this.tempMimic = DEFAULT_CAMOUFLAGE.get();
-        }
-    }
-
-    @Override
-    @NonNull
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (level instanceof ServerLevel serverLevel) {
-            saveMimic(state, serverLevel, pos);
-        }
-        return super.playerWillDestroy(level, pos, state, player);
+    public static BlockState getBlockState(Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be ? be.getMimicState() : DEFAULT_CAMOUFLAGE.get();
     }
 
     @Override
@@ -81,33 +53,14 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
         return new CamouflagedBoulderBlockEntity(pos, state);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected <T extends BoulderEntity> void summon(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
-        if (level.isClientSide()) return;
-        //数据
-//        BlockState savedMimic = Blocks.STONE.defaultBlockState();
-//        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
-//            savedMimic = be.getMimicState();
-//        }
-
-        //创建实体
-        CamouflagedBoulderEntity entity = new CamouflagedBoulderEntity(ModEntityTypes.CAMOUFLAGED_BOULDER.get(), level);
-        entity.moveOrInterpolateTo(pos.getBottomCenter());
-        //把抓取的数据塞给实体
-        entity.setMimicState(tempMimic);
-        //设置目标并生成
-        if (!level.getBlockState(pos.below()).isAir()) {
-            entity.targetTo(function.apply((T) entity));
-        }
-        level.addFreshEntity(entity);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
     }
 
     //中键拾取
     @Override
-    @NonNull
-    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
-        ItemStack stack = new ItemStack(this.asItem());//拿到巨石物品
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state, includeData, player);
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimic = be.getMimicState();
             if (mimic != null && !mimic.isAir()) {
@@ -118,15 +71,26 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
         return stack;
     }
 
+    @Override
+    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {
+        super.summonBoulder(state, level, pos);
+    }
+
+    @Override
+    protected <T extends BoulderEntity> void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
+        super.summonBoulder(level, pos, blockState, function);
+    }
+
     //放置方块
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
-            BlockState mimic = stack.get(ModDataComponents.MIMIC_STATE.get());
-            if (mimic != null) {
-                be.setMimicState(mimic);
-            }
+        if (!(level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be)) {
+            return;
+        }
+        BlockState mimic = stack.get(ModDataComponents.MIMIC_STATE.get());
+        if (mimic != null) {
+            be.setMimicState(mimic);
         }
     }
 
@@ -166,52 +130,54 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     @NonNull
     public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (!(level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be)) {
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
+        }
 
-        if(level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be){
-            Item item = stack.getItem();
-            BlockState currentMimic = be.getMimicState();
+        Item item = stack.getItem();
+        BlockState currentMimic = be.getMimicState();
 
-            //伪装逻辑
-            if(player.isShiftKeyDown() && item instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)){
-                BlockState nextMimic = blockItem.getBlock().defaultBlockState();
-                if(!currentMimic.equals(nextMimic) && !be.isLocked()){
-                    if(!level.isClientSide()){
-                        be.setMimicState(blockItem.getBlock().defaultBlockState());
-                        level.levelEvent(null, 2001, pos, Block.getId(state));
-                        level.playSound(null, pos, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.2F);
-                        updateAndChangeState(level, pos, state, be);
-                    }
-                    return InteractionResult.SUCCESS;
-                }
-            }
-
-            //涂蜡逻辑
-            if(stack.is(Items.HONEYCOMB) && !be.isLocked()){
-                if(!level.isClientSide()){
-                    be.setLocked(true);
-                    if(!player.isCreative()){
-                        stack.shrink(1);//消耗
-                    }
-                    //音效
-                    level.playSound(null, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    level.levelEvent(null, 3003, pos, 0);//粒子效果
+        //伪装逻辑
+        if (player.isShiftKeyDown() && item instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)) {
+            BlockState nextMimic = blockItem.getBlock().defaultBlockState();
+            if (!currentMimic.equals(nextMimic) && !be.isLocked()) {
+                if (!level.isClientSide()) {
+                    be.setMimicState(blockItem.getBlock().defaultBlockState());
+                    level.levelEvent(null, 2001, pos, Block.getId(state));
+                    level.playSound(null, pos, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.2F);
                     updateAndChangeState(level, pos, state, be);
                 }
                 return InteractionResult.SUCCESS;
             }
+        }
 
-            //去蜡逻辑
-            if(item instanceof AxeItem && be.isLocked()){
-                //只有在服务端确实锁定的状态下，才执行去蜡操作
-                if(!level.isClientSide()){
-                    be.setLocked(false);
-                    level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
-                    level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
-                    stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {});
-                    updateAndChangeState(level, pos, state, be);
+        //涂蜡逻辑
+        if (stack.is(Items.HONEYCOMB) && !be.isLocked()) {
+            if (!level.isClientSide()) {
+                be.setLocked(true);
+                if (!player.isCreative()) {
+                    stack.shrink(1);//消耗
                 }
-                return InteractionResult.SUCCESS;
+                //音效
+                level.playSound(null, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.levelEvent(null, 3003, pos, 0);//粒子效果
+                updateAndChangeState(level, pos, state, be);
             }
+            return InteractionResult.SUCCESS;
+        }
+
+        //去蜡逻辑
+        if (item instanceof AxeItem && be.isLocked()) {
+            //只有在服务端确实锁定的状态下，才执行去蜡操作
+            if (!level.isClientSide()) {
+                be.setLocked(false);
+                level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
+                level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
+                stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {
+                });
+                updateAndChangeState(level, pos, state, be);
+            }
+            return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.TRY_WITH_EMPTY_HAND;

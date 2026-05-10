@@ -10,7 +10,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.NonNull;
 
 public class FullCollisionBoulderBlock extends BoulderBlock {
-
     // 完整 16x16x16 标准方块碰撞箱
     private static final VoxelShape FULL_BLOCK_SHAPE = Shapes.box(0, 0, 0, 1, 1, 1);
 

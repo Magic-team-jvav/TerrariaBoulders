@@ -19,7 +19,7 @@ public class CamouflagedBoulderItem extends BlockItem {
     public Component getName(ItemStack stack) {
         BlockState mimicState = stack.get(ModDataComponents.MIMIC_STATE.get());
 
-        if (mimicState != null && mimicState.getBlock() != null && mimicState.getBlock() != Blocks.AIR) {
+        if (mimicState != null && mimicState.getBlock() != Blocks.AIR) {
             //有数据 传入目标方块的名字
             return Component.translatable(this.getDescriptionId(), mimicState.getBlock().getName());
         }

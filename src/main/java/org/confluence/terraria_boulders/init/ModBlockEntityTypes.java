@@ -6,7 +6,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
-import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderBlockEntity;
+import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 
 public final class ModBlockEntityTypes {
     public static final DeferredRegister<BlockEntityType<?>> REGISTER = TerrariaBoulders.modRegister(Registries.BLOCK_ENTITY_TYPE);

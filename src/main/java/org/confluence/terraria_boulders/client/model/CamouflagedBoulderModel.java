@@ -4,13 +4,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.model.data.ModelData;
-import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderBlockEntity;
+import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -25,26 +24,21 @@ public class CamouflagedBoulderModel implements BlockStateModel {
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts) {
         //如果 level 为空，则是在渲染物品。此时没有 ModelData，直接走原版石头的渲染逻辑
-        if (level == null || pos == null) {
-            this.originalModel.collectParts(random, parts);
-            return;
-        }
 
         //获取ModelData
         ModelData data = level.getModelData(pos);
         //提取伪装方块状态
         BlockState mimic = data.get(CamouflagedBoulderBlockEntity.MIMIC_STATE_PROPERTY);
-        if (mimic != null && !mimic.isAir() && !mimic.is(state.getBlock())) {//如果伪装目标是巨石方块本身直接渲染原始石头模型，防止递归
+        if (mimic != null && !mimic.isAir() && !mimic.is(state.getBlock())) {
+            //如果伪装目标是巨石方块本身直接渲染原始石头模型，防止递归
             //获取伪装目标的 BlockStateModel
             BlockStateModel mimicModel = Minecraft.getInstance()
                     .getModelManager()
                     .getBlockStateModelSet()
                     .get(mimic);
-            if (mimicModel != null) {
-                //递归调用目标collectParts
-                mimicModel.collectParts(level, pos, mimic, random, parts);
-                return;
-            }
+            //递归调用目标collectParts
+            mimicModel.collectParts(level, pos, mimic, random, parts);
+            return;
         }
 
         //没伪装时，显示原本的石头
@@ -63,7 +57,21 @@ public class CamouflagedBoulderModel implements BlockStateModel {
     }
 
     // 以下是原版接口要求的 Deprecated 兜底
-    @Override @Deprecated public void collectParts(RandomSource random, List<BlockStateModelPart> parts) { this.originalModel.collectParts(random, parts); }
-    @Override @Deprecated public Material.@NonNull Baked particleMaterial() { return originalModel.particleMaterial(); }
-    @Override @Deprecated public int materialFlags() { return originalModel.materialFlags(); }
+    @Override
+    @Deprecated
+    public void collectParts(RandomSource random, List<BlockStateModelPart> parts) {
+        this.originalModel.collectParts(random, parts);
+    }
+
+    @Override
+    @Deprecated
+    public Material.@NonNull Baked particleMaterial() {
+        return originalModel.particleMaterial();
+    }
+
+    @Override
+    @Deprecated
+    public int materialFlags() {
+        return originalModel.materialFlags();
+    }
 }

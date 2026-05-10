@@ -323,7 +323,6 @@ public class BoulderEntity extends Projectile {
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-        //entityData.set(DATA_BLOCK_STATE, input.read("BlockState", BlockState.CODEC).orElseGet(() -> ModBlocks.BOULDER.get().defaultBlockState()));
         input.read("BlockState", BlockState.CODEC).ifPresent(state -> entityData.set(DATA_BLOCK_STATE, state));
         tickCount = input.getIntOr("Age", 0);
         stillTickCount = input.getIntOr("StillAge", 0);

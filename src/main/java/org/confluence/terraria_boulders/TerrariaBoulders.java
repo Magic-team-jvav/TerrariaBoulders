@@ -38,19 +38,11 @@ public class TerrariaBoulders {
         ModCreativeModeTabs.REGISTRY.register(modEventBus);
         ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
-        //ModClientEvent.REGISTER.register(modEventBus);
-
-        modEventBus.addListener(this::commonSetup);
     }
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("HELLO from server starting");
-    }
-
-    //@SubscribeEvent
-    private void commonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(BoulderCannonBlock::initAmmoMap);
     }
 
     @Contract("_ -> new")

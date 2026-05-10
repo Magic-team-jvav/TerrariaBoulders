@@ -35,7 +35,6 @@ public class RainbowBoulderEntity extends BoulderEntity {
         super(entityType, level);
     }
 
-
     public RainbowBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.RAINBOW_BOULDER.get(), level, pos, blockState);
         minRemoveSpeed = 0;

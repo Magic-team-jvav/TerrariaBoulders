@@ -18,7 +18,7 @@ import org.confluence.terraria_boulders.init.ModBlocks;
 
 public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends AbstractBoulderRenderer.BoulderRenderState> extends EntityRenderer<E, S> {
     public static final BlockDisplayContext BLOCK_DISPLAY_CONTEXT = BlockDisplayContext.create();
-    private final BlockModelResolver blockModelResolver;
+    protected final BlockModelResolver blockModelResolver;
 
     public AbstractBoulderRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -76,27 +76,24 @@ public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends
     }
 
     public static class BoulderRenderState extends EntityRenderState {
-            public BlockModelRenderState displayBlockModel = new BlockModelRenderState();
+        public static final BlockState DEFAULTED_BLOCK_STATE = ModBlocks.BOULDER.get().defaultBlockState();
+        public BlockModelRenderState displayBlockModel = new BlockModelRenderState();
 
-            public float rotateO = 0.0F;
-            public float rotate = 0.0F;
+        public float rotateO = 0.0F;
+        public float rotate = 0.0F;
 
-            public float radius = 0.5F; // 半径
-            public int maxRemoveTick = 1200; // 最大移除时间
-            public int maxStillTick = 20; // 最大静止时间
-            public double speed = 0.7; // 速度
-            public double minRemoveSpeed = 0.007; // 最小移除速度
-            public double bounceFactor = 0.3;
-            public double frictionFactor = 0.9;
-            public int generation = 0; // 分裂代数，0为原始巨石
+        public float radius = 0.5F; // 半径
+        public int maxRemoveTick = 1200; // 最大移除时间
+        public int maxStillTick = 20; // 最大静止时间
+        public double speed = 0.7; // 速度
+        public double minRemoveSpeed = 0.007; // 最小移除速度
+        public double bounceFactor = 0.3;
+        public double frictionFactor = 0.9;
+        public int generation = 0; // 分裂代数，0为原始巨石
 
-            public int stillTickCount; // 静止刻计时
+        public int stillTickCount; // 静止刻计时
 
-            public BlockState blockState;
-            public float yRot;
-
-            public void defaultBlockState(){
-                blockState = ModBlocks.BOULDER.get().defaultBlockState();
-            }
-        }
+        public BlockState blockState = DEFAULTED_BLOCK_STATE;
+        public float yRot;
+    }
 }

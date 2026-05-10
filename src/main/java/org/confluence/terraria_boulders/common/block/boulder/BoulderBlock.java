@@ -3,10 +3,8 @@ package org.confluence.terraria_boulders.common.block.boulder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -17,19 +15,17 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class BoulderBlock extends Block {
-    private final BoulderFactory factory;
     private static final VoxelShape SHAPE = Shapes.or(
             box(1.9, -0.1, 1.9, 14.1, 16.1, 14.1),
             box(-0.1, 1.9, 1.9, 16.1, 14.1, 14.1),
             box(1.9, 1.9, -0.1, 14.1, 14.1, 16.1));
+    private final BoulderFactory factory;
 
     public BoulderBlock(Properties properties) {
         this(properties, BoulderEntity::new);
@@ -56,7 +52,7 @@ public class BoulderBlock extends Block {
     @Override
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
         super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
-        summon(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
+        summonBoulder(state, level, pos);
     }
 
     @Override
@@ -87,22 +83,22 @@ public class BoulderBlock extends Block {
         level.removeBlock(pos, false);
     }
 
-    protected <T extends BoulderEntity> void summon(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
+    protected void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {
+        summonBoulder(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
+    }
+
+    protected <T extends BoulderEntity> void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
         @SuppressWarnings("unchecked")
-        T entity = (T) factory.create(level, pos.getCenter(), blockState);
+        T entity = (T) createBoulderEntity(level, pos.getCenter(), blockState);
         if (!level.getBlockState(pos.below()).isAir()) {
             entity.targetTo(function.apply(entity));
         }
         level.addFreshEntity(entity);
     }
-//    protected void summon(Level level, BlockPos pos, BlockState blockState, Function<? super BoulderEntity, Player> function) {
-//        BoulderEntity entity = factory.create(level, pos.getCenter(), blockState);
-//        if (!level.getBlockState(pos.below()).isAir()) {
-//            entity.targetTo(function.apply(entity));
-//        }
-//        level.addFreshEntity(entity);
-//    }
 
+    public BoulderEntity createBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
+        return factory.create(level, pos, blockState);
+    }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
@@ -113,17 +109,4 @@ public class BoulderBlock extends Block {
     public interface BoulderFactory {
         BoulderEntity create(Level level, Vec3 position, BlockState blockState);
     }
-
-//    public abstract class BoulderSummoner<T extends BoulderEntity> {
-//        //让子类提供具体的Factory
-//        protected abstract T createEntity(Level level, BlockPos pos, BlockState blockState);
-//        protected void summon(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
-//            //调用子类实现的创建逻辑，拿到具体的 T
-//            T entity = createEntity(level, pos, blockState);
-//            if (!level.getBlockState(pos.below()).isAir()) {
-//                entity.targetTo(function.apply(entity));
-//            }
-//            level.addFreshEntity(entity);
-//        }
-//    }
 }

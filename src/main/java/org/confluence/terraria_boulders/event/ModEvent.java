@@ -79,34 +79,43 @@ public class ModEvent {
     //修复手持物品潜行状态下无法触发useItem方法的问题
     @SubscribeEvent
     public static void onUseItemOnBlock(UseItemOnBlockEvent event) {
-        if (event.getUsePhase() == UseItemOnBlockEvent.UsePhase.ITEM_BEFORE_BLOCK) {
-            Level level = event.getLevel();
-            BlockPos pos = event.getPos();
-            BlockState state = level.getBlockState(pos);
-            Player player = event.getPlayer();
-            Block block = state.getBlock();
-            if (player != null) {
-                //目标是巨石/巨石大炮
-                if(block instanceof CamouflagedBoulderBlock/* || block instanceof BoulderCannonBlock*/){
-                    //处于潜行状态
-                    if (player.isShiftKeyDown()) {
-                        //手动触发方块逻辑
-                        InteractionResult result = state.useItemOn(
-                                event.getItemStack(),
-                                level,
-                                player,
-                                event.getHand(),
-                                event.getUseOnContext().getHitResult()
-                        );
-
-                        //useItemOn返回SUCCESS
-                        if (result.consumesAction()) {
-                            //不允许后续放置方块动作发生
-                            event.cancelWithResult(InteractionResult.SUCCESS);
-                        }
-                    }
-                }
-            }
+        if (event.getUsePhase() != UseItemOnBlockEvent.UsePhase.ITEM_BEFORE_BLOCK) {
+            return;
         }
+
+        Level level = event.getLevel();
+        BlockPos pos = event.getPos();
+        BlockState state = level.getBlockState(pos);
+        Player player = event.getPlayer();
+        Block block = state.getBlock();
+        if (player == null) {
+            return;
+        }
+
+        //目标是巨石/巨石大炮
+        if (!(block instanceof CamouflagedBoulderBlock)/* || block instanceof BoulderCannonBlock*/) {
+            return;
+        }
+
+        //处于潜行状态
+        if (!player.isShiftKeyDown()) {
+            return;
+        }
+        //手动触发方块逻辑
+        InteractionResult result = state.useItemOn(
+                event.getItemStack(),
+                level,
+                player,
+                event.getHand(),
+                event.getUseOnContext().getHitResult()
+        );
+
+        //useItemOn返回SUCCESS
+        if (!result.consumesAction()) {
+            return;
+        }
+
+        //不允许后续放置方块动作发生
+        event.cancelWithResult(InteractionResult.SUCCESS);
     }
 }
