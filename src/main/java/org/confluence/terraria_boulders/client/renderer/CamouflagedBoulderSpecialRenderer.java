@@ -61,10 +61,10 @@ public class CamouflagedBoulderSpecialRenderer implements SpecialModelRenderer<B
         //model.collectParts(renderState.scratchRandomSource(42L), parts);
         model.collectParts(
                 null,                                  // level: 无世界环境
-                BlockPos.ZERO,                         // pos: 原点坐标
-                stateToRender,                         // state: 你要伪装的方块状态
-                renderState.scratchRandomSource(42L),  // random: 固定随机种子(42L保证材质不闪烁)
-                parts                                  // parts: 接收几何碎片的容器
+                BlockPos.ZERO,                              // pos: 原点坐标
+                stateToRender,                              // state: 你要伪装的方块状态
+                renderState.scratchRandomSource(42L), // random: 固定随机种子(42L保证材质不闪烁)
+                parts                                       // parts: 接收几何碎片的容器
         );
 
         return renderState;

@@ -1,0 +1,6 @@
+{
+  "variants": {
+      "powered=false": { "model": "terraria_boulders:block/boulder_cannon" },
+      "powered=true": { "model": "terraria_boulders:block/boulder_cannon" }
+  }
+}

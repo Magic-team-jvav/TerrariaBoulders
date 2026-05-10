@@ -47,8 +47,8 @@ public final class ModItems {
                     .build()), ModBlocks.BOULDER_BREAD_BLOCK.getDelegate());
     public static final DeferredItem<CamouflagedBoulderItem> CAMOUFLAGED_BOULDER =
             REGISTER.registerItem("camouflaged_boulder",
-                    (properties) -> new CamouflagedBoulderItem(ModBlocks.CAMOUFLAGED_BOULDER.get(), properties));//伪装巨石
-
+                    (properties) -> new CamouflagedBoulderItem(ModBlocks.CAMOUFLAGED_BOULDER.get(), properties.component(ModDataComponents.IS_LOCKED.get(), false)));//伪装巨石
+    public static final DeferredItem<BlockItem> BOULDER_CANNON = REGISTER.registerSimpleBlockItem(ModBlocks.BOULDER_CANNON);//巨石大炮
 
     public static DeferredItem<BlockItem> registerBlockItemFood(String name, Item.Properties properties, Holder<? extends Block> block) {
         return REGISTER.registerItem(name, (properties1) -> new BlockItem(block.value(), properties1), () -> properties);

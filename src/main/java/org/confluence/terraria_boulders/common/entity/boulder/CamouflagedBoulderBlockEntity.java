@@ -29,10 +29,6 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
     private BlockState mimicState = Blocks.STONE.defaultBlockState();
     private boolean isLocked = false;
 
-    public CamouflagedBoulderBlockEntity(BlockEntityType<?> type, BlockPos worldPosition, BlockState blockState) {
-        super(type, worldPosition, blockState);
-    }
-
     public CamouflagedBoulderBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), pos, state);
     }
@@ -78,7 +74,7 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         if (savedState != null && !savedState.isAir()) {
             this.setMimicState(savedState);
         }
-        isLocked = input.read("MimicState", Codec.BOOL).orElse(false);
+        isLocked = input.read("IsLocked", Codec.BOOL).orElse(false);
     }
 
     @Override
@@ -94,19 +90,8 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         super.applyImplicitComponents(components);
 
         BlockState state = components.get(ModDataComponents.MIMIC_STATE.get());
-        if (state != null) {
-            this.mimicState = state;
-        }
-
-        //更新HAS_DATA数据
-        if (this.level != null && !this.level.isClientSide()) {
-            BlockState currentState = this.level.getBlockState(this.worldPosition);
-            boolean hasDataNow = this.mimicState != null && !this.mimicState.isAir();
-
-            if (currentState.getValue(CamouflagedBoulderBlock.HAS_DATA) != hasDataNow) {
-                this.level.setBlock(this.worldPosition, currentState.setValue(CamouflagedBoulderBlock.HAS_DATA, hasDataNow), 3);
-            }
-        }
+        if (state != null) this.mimicState = state;
+        this.isLocked = components.getOrDefault(ModDataComponents.IS_LOCKED.get(), false);
     }
 
     //用精准采集挖掉方块或者Ctrl中键复制方块时调用这个方法把数据塞回物品里
@@ -117,6 +102,7 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         if (this.mimicState != null && !this.mimicState.isAir()) {
             components.set(ModDataComponents.MIMIC_STATE.get(), this.mimicState);
         }
+        components.set(ModDataComponents.IS_LOCKED, this.isLocked);
     }
 
     //返回要发送到客户端的数据包
@@ -132,11 +118,4 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return saveWithoutMetadata(registries);
     }
-//    @Override
-//    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-//        // 获取用于同步的完整 NBT 数据
-//        CompoundTag tag = new CompoundTag();
-//        saveAdditional(tag, registries);
-//        return tag;
-//    }
 }

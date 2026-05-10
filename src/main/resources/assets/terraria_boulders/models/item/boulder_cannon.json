@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "terraria_boulders:block/boulder_cannon"
+  }
+}

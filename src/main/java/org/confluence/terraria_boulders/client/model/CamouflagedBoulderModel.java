@@ -16,7 +16,7 @@ import org.jspecify.annotations.NonNull;
 import java.util.List;
 
 public class CamouflagedBoulderModel implements BlockStateModel {
-    private final BlockStateModel originalModel; // 原始石头的模型
+    private final BlockStateModel originalModel;//原始石头的模型
 
     public CamouflagedBoulderModel(BlockStateModel originalModel) {
         this.originalModel = originalModel;

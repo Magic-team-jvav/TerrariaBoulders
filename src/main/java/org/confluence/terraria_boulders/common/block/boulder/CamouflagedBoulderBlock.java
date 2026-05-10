@@ -36,15 +36,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implements EntityBlock {
-    public static final BooleanProperty HAS_DATA = BooleanProperty.create("has_data");
     //public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = () -> ModBlocks.CAMOUFLAGED_BOULDER.get().defaultBlockState();
     public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = Blocks.STONE::defaultBlockState;
     private BlockState tempMimic = Blocks.STONE.defaultBlockState();
 
     public CamouflagedBoulderBlock(Properties properties) {
         super(properties.noOcclusion());
-        //默认没有数据，显示石头模型
-        this.registerDefaultState(this.stateDefinition.any().setValue(HAS_DATA, false));
     }
 
     @Override
@@ -82,11 +79,6 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     public BlockEntity newBlockEntity(@NonNull BlockPos pos, @NonNull BlockState state) {
         return new CamouflagedBoulderBlockEntity(pos, state);
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(HAS_DATA);
     }
 
     @SuppressWarnings("unchecked")
@@ -182,15 +174,15 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
             //伪装逻辑
             if(player.isShiftKeyDown() && item instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)){
                 BlockState nextMimic = blockItem.getBlock().defaultBlockState();
-                if(!currentMimic.equals(nextMimic)){
-                    if(!level.isClientSide() && !be.isLocked()){
+                if(!currentMimic.equals(nextMimic) && !be.isLocked()){
+                    if(!level.isClientSide()){
                         be.setMimicState(blockItem.getBlock().defaultBlockState());
                         level.levelEvent(null, 2001, pos, Block.getId(state));
                         level.playSound(null, pos, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.2F);
+                        updateAndChangeState(level, pos, state, be);
                     }
-                    updateAndChangeState(level, pos, state, be);
+                    return InteractionResult.SUCCESS;
                 }
-                return InteractionResult.SUCCESS;
             }
 
             //涂蜡逻辑
@@ -203,20 +195,21 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
                     //音效
                     level.playSound(null, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
                     level.levelEvent(null, 3003, pos, 0);//粒子效果
+                    updateAndChangeState(level, pos, state, be);
                 }
-                updateAndChangeState(level, pos, state, be);
                 return InteractionResult.SUCCESS;
             }
 
             //去蜡逻辑
             if(item instanceof AxeItem && be.isLocked()){
+                //只有在服务端确实锁定的状态下，才执行去蜡操作
                 if(!level.isClientSide()){
                     be.setLocked(false);
                     level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
                     level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
                     stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {});
+                    updateAndChangeState(level, pos, state, be);
                 }
-                updateAndChangeState(level, pos, state, be);
                 return InteractionResult.SUCCESS;
             }
         }

@@ -37,6 +37,14 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
         this.setBlockState(state);
     }
 
+//    public boolean isMimicLocked() {
+//        return this.isLocked();
+//    }
+//
+//    public void setMimicLocked(boolean locked) {
+//        this.setLocked(locked);
+//    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);

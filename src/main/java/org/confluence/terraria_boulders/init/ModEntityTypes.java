@@ -7,6 +7,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
+import org.confluence.terraria_boulders.common.entity.CannonSeatEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
 
 import java.util.function.Supplier;
@@ -58,6 +59,11 @@ public final class ModEntityTypes {
             EntityType.Builder.<CamouflagedBoulderEntity>of(CamouflagedBoulderEntity::new, MobCategory.MISC)
                     .sized(1, 1)
                     .clientTrackingRange(6));
+    public static final DeferredHolder<EntityType<?>, EntityType<CannonSeatEntity>> CANNON_SEAT = register("cannon_seat", () ->
+            EntityType.Builder.of(CannonSeatEntity::new, MobCategory.MISC)
+                    .sized(0, 0)
+                    .clientTrackingRange(6)
+            );
 
     private static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, Supplier<EntityType.Builder<T>> builder) {
         return REGISTER.register(name, () -> builder.get().build(TerrariaBoulders.modResourceKey(Registries.ENTITY_TYPE, name)));

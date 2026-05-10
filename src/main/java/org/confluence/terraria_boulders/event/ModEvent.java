@@ -5,6 +5,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -19,6 +21,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.RollingCactusSpikeModel;
 import org.confluence.terraria_boulders.client.renderer.*;
+import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
 import org.confluence.terraria_boulders.common.block.boulder.CamouflagedBoulderBlock;
 import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEffects;
@@ -73,6 +76,7 @@ public class ModEvent {
         }
     }
 
+    //修复手持物品潜行状态下无法触发useItem方法的问题
     @SubscribeEvent
     public static void onUseItemOnBlock(UseItemOnBlockEvent event) {
         if (event.getUsePhase() == UseItemOnBlockEvent.UsePhase.ITEM_BEFORE_BLOCK) {
@@ -80,23 +84,26 @@ public class ModEvent {
             BlockPos pos = event.getPos();
             BlockState state = level.getBlockState(pos);
             Player player = event.getPlayer();
-            //目标是巨石
-            if (player != null && state.getBlock() instanceof CamouflagedBoulderBlock) {
-                //处于潜行状态
-                if (player.isShiftKeyDown()) {
-                    //手动触发方块逻辑
-                    InteractionResult result = state.useItemOn(
-                            event.getItemStack(),
-                            level,
-                            player,
-                            event.getHand(),
-                            event.getUseOnContext().getHitResult()
-                    );
+            Block block = state.getBlock();
+            if (player != null) {
+                //目标是巨石/巨石大炮
+                if(block instanceof CamouflagedBoulderBlock/* || block instanceof BoulderCannonBlock*/){
+                    //处于潜行状态
+                    if (player.isShiftKeyDown()) {
+                        //手动触发方块逻辑
+                        InteractionResult result = state.useItemOn(
+                                event.getItemStack(),
+                                level,
+                                player,
+                                event.getHand(),
+                                event.getUseOnContext().getHitResult()
+                        );
 
-                    //useItemOn返回SUCCESS
-                    if (result.consumesAction()) {
-                        //不允许后续放置方块动作发生
-                        event.cancelWithResult(InteractionResult.SUCCESS);
+                        //useItemOn返回SUCCESS
+                        if (result.consumesAction()) {
+                            //不允许后续放置方块动作发生
+                            event.cancelWithResult(InteractionResult.SUCCESS);
+                        }
                     }
                 }
             }

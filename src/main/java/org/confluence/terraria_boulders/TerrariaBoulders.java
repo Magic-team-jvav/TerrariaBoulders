@@ -8,11 +8,13 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
 import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.confluence.terraria_boulders.init.*;
 import org.jetbrains.annotations.Contract;
@@ -37,11 +39,18 @@ public class TerrariaBoulders {
         ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
         //ModClientEvent.REGISTER.register(modEventBus);
+
+        modEventBus.addListener(this::commonSetup);
     }
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("HELLO from server starting");
+    }
+
+    //@SubscribeEvent
+    private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(BoulderCannonBlock::initAmmoMap);
     }
 
     @Contract("_ -> new")

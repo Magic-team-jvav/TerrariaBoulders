@@ -1,7 +1,5 @@
 package org.confluence.terraria_boulders.init;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -9,11 +7,11 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
+import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
 import org.confluence.terraria_boulders.common.block.boulder.*;
 import org.confluence.terraria_boulders.common.entity.boulder.*;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public final class ModBlocks {
     public static final DeferredRegister.Blocks REGISTER = DeferredRegister.createBlocks(TerrariaBoulders.ID);
@@ -43,10 +41,9 @@ public final class ModBlocks {
 
     public static final DeferredBlock<BoulderBreadBlock> BOULDER_BREAD_BLOCK = register("boulder_bread_block", BoulderBreadBlock::new);
     //伪装巨石
-//    public static final DeferredBlock<CamouflagedBoulderBlock> CAMOUFLAGED_BOULDER = register("camouflaged_boulder",
-//            (props) -> new CamouflagedBoulderBlock(props.noOcclusion())
-//    );
     public static final DeferredBlock<CamouflagedBoulderBlock> CAMOUFLAGED_BOULDER = register("camouflaged_boulder", CamouflagedBoulderBlock::new);
+    //巨石大炮
+    public static final DeferredBlock<BoulderCannonBlock> BOULDER_CANNON = register("boulder_cannon", BoulderCannonBlock::new);
 
     private static <B extends Block> DeferredBlock<B> register(String id, Function<BlockBehaviour.Properties, B> supplier) {
         return REGISTER.registerBlock(id, supplier);
