@@ -85,10 +85,6 @@ public class BoulderEntity extends Projectile {
         return Math.sqrt(deltaMovement.x * deltaMovement.x + deltaMovement.z * deltaMovement.z);
     }
 
-    public BlockState getBlockState() {
-        return entityData.get(DATA_BLOCK_STATE);
-    }
-
     public void onRemove() {
         if (!(level() instanceof ServerLevel level)) {
             return;
@@ -221,7 +217,7 @@ public class BoulderEntity extends Projectile {
         }
     }
 
-    private void applyFrictionAndRotation() {
+    protected void applyFrictionAndRotation() {
         //衰减速度
         Vec3 deltaMovement = getDeltaMovement().scale(0.99);
         setDeltaMovement(deltaMovement);
@@ -352,6 +348,15 @@ public class BoulderEntity extends Projectile {
     @Override
     public boolean fireImmune() {
         return true;
+    }
+
+
+    public BlockState getBlockState() {
+        return entityData.get(DATA_BLOCK_STATE);
+    }
+
+    public EntityDataAccessor<BlockState> getBlockStateAccessor() {
+        return DATA_BLOCK_STATE;
     }
 
     //统一设置方块状态

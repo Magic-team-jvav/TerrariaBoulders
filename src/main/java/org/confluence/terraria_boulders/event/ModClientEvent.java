@@ -20,6 +20,7 @@ import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.CamouflagedBoulderModel;
 import org.confluence.terraria_boulders.client.model.MiniBoulderCannonModel;
 import org.confluence.terraria_boulders.client.renderer.BoulderCannonRenderer;
+import org.confluence.terraria_boulders.client.renderer.CamouflagedBoulderBER;
 import org.confluence.terraria_boulders.client.renderer.CamouflagedBoulderRenderer;
 import org.confluence.terraria_boulders.client.renderer.CamouflagedBoulderSpecialRenderer;
 import org.confluence.terraria_boulders.init.ModBlockEntityTypes;
@@ -48,7 +49,8 @@ public class ModClientEvent {
         //event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);
         event.registerEntityRenderer(ModEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntityTypes.BOULDER_CANNON.get(), BoulderCannonRenderer::new);
-        event.registerEntityRenderer(ModEntityTypes.CANNON_SEAT.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CANNON_SEAT.get(), NoopRenderer::new);//CamouflagedBoulderBER
+        event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);
     }
 
     @SubscribeEvent

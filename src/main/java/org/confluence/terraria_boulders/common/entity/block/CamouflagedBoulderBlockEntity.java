@@ -39,49 +39,49 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         return mimicState;
     }
 
+//    public void setMimicState(BlockState mimicState) {
+//        this.mimicState = mimicState;
+//        //this.setChanged();
+//        //在客户端收到数据，强制重新构建ModelData并刷新渲染
+//        if (this.level != null && this.level.isClientSide()) {
+//            this.requestModelDataUpdate();
+//            this.level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);//重绘
+//        }
+//    }
+
     public void setMimicState(BlockState mimicState) {
+        if (this.mimicState == mimicState) return;//状态没变直接跳过
+
         this.mimicState = mimicState;
-        //this.setChanged();
-        //在客户端收到数据，强制重新构建ModelData并刷新渲染
-        if (this.level != null && this.level.isClientSide()) {
-            this.requestModelDataUpdate();
-            this.level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);//重绘
+        this.setChanged();
+
+        if (this.level != null) {
+            if (!this.level.isClientSide()) {
+                //服务端操作：通知附近客户端接收新数据
+                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);//更新方块状态+发送给客户端
+            } else {
+                //客户端操作：重新构建ModelData
+                this.requestModelDataUpdate();
+                //触发区块重绘，让BER渲染器画出新模型
+                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 8);
+                //光照更新
+                this.level.getLightEngine().checkBlock(this.worldPosition);
+            }
         }
     }
 
     public boolean isLocked() { return this.isLocked; }
     public void setLocked(boolean locked) { this.isLocked = locked; }
 
-    @Override
-    @NonNull
-    public BlockState getBlockState() {
-        return this.getMimicState();
-    }
-
-    @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        if (this.mimicState != null && !this.mimicState.isAir()) {
-            output.storeNullable("MimicState", BlockState.CODEC, this.mimicState);
-        }
-        output.storeNullable("IsLocked", Codec.BOOL, this.isLocked);
-    }
-
-    @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        BlockState savedState = input.read("MimicState", BlockState.CODEC).orElse(null);
-        if (savedState != null && !savedState.isAir()) {
-            this.setMimicState(savedState);
-        }
-        isLocked = input.read("IsLocked", Codec.BOOL).orElse(false);
-    }
+//    @Override
+//    @NonNull
+//    public BlockState getBlockState() {
+//        return this.getMimicState();
+//    }
 
     @Override
     public @NotNull ModelData getModelData() {
-        return ModelData.builder()
-                .with(MIMIC_STATE_PROPERTY, this.mimicState)
-                .build();
+        return ModelData.builder().with(MIMIC_STATE_PROPERTY, this.mimicState).build();
     }
 
     //把带有组件的物品放在地上时，会自动调用这个方法把组件塞进方块
@@ -103,6 +103,25 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
             components.set(ModDataComponents.MIMIC_STATE.get(), this.mimicState);
         }
         components.set(ModDataComponents.IS_LOCKED, this.isLocked);
+    }
+
+    @Override
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        if (this.mimicState != null && !this.mimicState.isAir()) {
+            output.storeNullable("MimicState", BlockState.CODEC, this.mimicState);
+        }
+        output.storeNullable("IsLocked", Codec.BOOL, this.isLocked);
+    }
+
+    @Override
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        BlockState savedState = input.read("MimicState", BlockState.CODEC).orElse(null);
+        if (savedState != null && !savedState.isAir()) {
+            this.setMimicState(savedState);
+        }
+        isLocked = input.read("IsLocked", Codec.BOOL).orElse(false);
     }
 
     //返回要发送到客户端的数据包
@@ -128,6 +147,6 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        boulderBlock.summonBoulder(getBlockState(), serverLevel, pos);
+        boulderBlock.summonBoulder(this.getMimicState(), serverLevel, pos);
     }
 }

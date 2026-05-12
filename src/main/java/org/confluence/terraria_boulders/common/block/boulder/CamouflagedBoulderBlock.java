@@ -1,5 +1,6 @@
 package org.confluence.terraria_boulders.common.block.boulder;
 
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -7,18 +8,23 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderEntity;
@@ -27,6 +33,7 @@ import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -34,7 +41,10 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = Blocks.STONE::defaultBlockState;
 
     public CamouflagedBoulderBlock(Properties properties) {
-        super(properties.noOcclusion(), CamouflagedBoulderEntity::new);
+        super(properties
+                .dynamicShape()//渲染引擎不缓存形状
+                .noOcclusion(),//光照引擎请求透光形状
+                CamouflagedBoulderEntity::new);
     }
 
     public static BlockState getBlockState(Level level, BlockPos pos) {
@@ -130,56 +140,157 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     @NonNull
     public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (!(level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be)) {
-            return InteractionResult.TRY_WITH_EMPTY_HAND;
-        }
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            Item item = stack.getItem();
+            BlockState currentMimic = be.getMimicState();
 
-        Item item = stack.getItem();
-        BlockState currentMimic = be.getMimicState();
+            //伪装逻辑
+            if (player.isShiftKeyDown() && (item instanceof BlockItem blockItem) && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)) {
+                //读取玩家朝向
+                BlockPlaceContext context = new BlockPlaceContext(player, hand, stack, hitResult);
+                BlockState nextMimic = blockItem.getBlock().getStateForPlacement(context);
 
-        //伪装逻辑
-        if (player.isShiftKeyDown() && item instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)) {
-            BlockState nextMimic = blockItem.getBlock().defaultBlockState();
-            if (!currentMimic.equals(nextMimic) && !be.isLocked()) {
+                if (nextMimic != null) be.setMimicState(nextMimic);
+
+                if (!currentMimic.equals(nextMimic) && !be.isLocked()) {
+                    if (!level.isClientSide()) {
+                        be.setMimicState(nextMimic);
+                        level.levelEvent(null, 2001, pos, Block.getId(state));
+                        level.playSound(null, pos, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.2F);
+                        updateAndChangeState(level, pos, state, be);
+                    }
+                    return InteractionResult.SUCCESS;
+                }
+            }
+
+            //涂蜡逻辑
+            if (stack.is(Items.HONEYCOMB) && !be.isLocked()) {
                 if (!level.isClientSide()) {
-                    be.setMimicState(blockItem.getBlock().defaultBlockState());
-                    level.levelEvent(null, 2001, pos, Block.getId(state));
-                    level.playSound(null, pos, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.2F);
+                    be.setLocked(true);
+                    if (!player.isCreative()) {
+                        stack.shrink(1);//消耗
+                    }
+                    //音效
+                    level.playSound(null, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    level.levelEvent(null, 3003, pos, 0);//粒子效果
+                    updateAndChangeState(level, pos, state, be);
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            //去蜡逻辑
+            if (item instanceof AxeItem && be.isLocked()) {
+                //只有在服务端确实锁定的状态下，才执行去蜡操作
+                if (!level.isClientSide()) {
+                    be.setLocked(false);
+                    level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
+                    level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
+                    stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {
+                    });
                     updateAndChangeState(level, pos, state, be);
                 }
                 return InteractionResult.SUCCESS;
             }
         }
-
-        //涂蜡逻辑
-        if (stack.is(Items.HONEYCOMB) && !be.isLocked()) {
-            if (!level.isClientSide()) {
-                be.setLocked(true);
-                if (!player.isCreative()) {
-                    stack.shrink(1);//消耗
-                }
-                //音效
-                level.playSound(null, pos, SoundEvents.HONEYCOMB_WAX_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
-                level.levelEvent(null, 3003, pos, 0);//粒子效果
-                updateAndChangeState(level, pos, state, be);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        //去蜡逻辑
-        if (item instanceof AxeItem && be.isLocked()) {
-            //只有在服务端确实锁定的状态下，才执行去蜡操作
-            if (!level.isClientSide()) {
-                be.setLocked(false);
-                level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
-                level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
-                stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {
-                });
-                updateAndChangeState(level, pos, state, be);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         return InteractionResult.TRY_WITH_EMPTY_HAND;
+    }
+
+    //代理物理碰撞箱（noPhysics问题）
+    @Override
+    @NonNull
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimicState = be.getMimicState();
+            if (mimicState != null && !mimicState.isAir()) {
+                return mimicState.getCollisionShape(level, pos, context);
+            }
+        }
+        return super.getCollisionShape(state, level, pos, context);
+    }
+
+    //代理外观交互箱
+    @Override
+    @NonNull
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimicState = be.getMimicState();
+            if (mimicState != null && !mimicState.isAir()) {
+                return mimicState.getShape(level, pos, context);
+            }
+        }
+        return super.getShape(state, level, pos, context);
+    }
+
+    //代理阴影亮度
+    @Override
+    public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimicState = be.getMimicState();
+            if (mimicState != null && !mimicState.isAir()) {
+                return mimicState.getShadeBrightness(level, pos);
+            }
+        }
+        return super.getShadeBrightness(state, level, pos);
+    }
+
+    //放行天空光线（配合noOcclusion()）
+    @Override
+    protected boolean propagatesSkylightDown(BlockState state) {
+        return true;
+    }
+
+    //代理视觉形状
+    @Override
+    public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimicState = be.getMimicState();
+            if (mimicState != null && !mimicState.isAir()) {
+                return mimicState.getVisualShape(level, pos, context);
+            }
+        }
+        return super.getVisualShape(state, level, pos, context);
+    }
+
+    //代理发光属性
+    @Override
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimicState = be.getMimicState();
+            if (mimicState != null && !mimicState.isAir()) {
+                //读取目标方块发光亮度
+                return mimicState.getLightEmission(level, pos);
+            }
+        }
+        return super.getLightEmission(state, level, pos);
+    }
+
+    //代理音效
+    @Override
+    public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimic = be.getMimicState();
+            if (mimic != null && !mimic.isAir()) {
+                return mimic.getSoundType(level, pos, entity);
+            }
+        }
+        return super.getSoundType(state, level, pos, entity);
+    }
+
+    @Override
+    public void spawnDestroyParticles(Level level, Player player, BlockPos pos, BlockState state) {
+        if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
+            BlockState mimic = be.getMimicState();
+            if (mimic != null && !mimic.isAir()) {
+                level.levelEvent(player, 2001, pos, Block.getId(mimic));
+                return;
+            }
+        }
+        super.spawnDestroyParticles(level, player, pos, state);
+    }
+
+    @Override
+    @NonNull
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
     }
 }
