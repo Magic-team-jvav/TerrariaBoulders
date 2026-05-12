@@ -65,6 +65,7 @@ public class BoulderEntity extends Projectile {
     public int generation = 0; // 分裂代数，0为原始巨石
 
     public int stillTickCount; // 静止刻计时
+    Vec3 preMoveVelocity; // 在一刻里面移动前的速度
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -118,18 +119,29 @@ public class BoulderEntity extends Projectile {
     public void tick() {
         super.tick();
 
-        //预测方块碰撞（提前触发撞墙音效或碎裂）
-        checkBlockCollisionPrediction();
+        //先施加重力，不然空中水平移动时测不到地板
+        applyGravity();
 
-        //撞击后如果破碎直接返回
-        if(this.isRemoved()) return;
+        //AABB移动前的速度
+        this.preMoveVelocity = getDeltaMovement();
 
-        //进行移动
+        //进行移动（AABB会处理穿墙，并将撞墙方向的速度设为 0）
         Vec3 oldPos = this.position();//移动前的位置
         moveAndUpdateNeighbors();
         Vec3 newPos = this.position();//移动后的位置
 
-        //计算真实物理位移
+        //方块碰撞检测
+        Vec3 postMoveVelocity = getDeltaMovement();
+        boolean hitX = Math.abs(postMoveVelocity.x) < Math.abs(preMoveVelocity.x) - 1.0E-5;
+        boolean hitY = Math.abs(postMoveVelocity.y) < Math.abs(preMoveVelocity.y) - 1.0E-5;
+        boolean hitZ = Math.abs(postMoveVelocity.z) < Math.abs(preMoveVelocity.z) - 1.0E-5;
+
+        //分发撞击事件
+        if (hitX) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST, this.blockPosition(), false));
+        if (hitY) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP, this.blockPosition(), false));
+        if (hitZ) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH, this.blockPosition(), false));
+
+        //计算实体碰撞
         onHit(newPos.subtract(oldPos));
 
         //摩擦力、旋转
@@ -174,14 +186,12 @@ public class BoulderEntity extends Projectile {
     protected void moveAndUpdateNeighbors() {
         Vec3 deltaMovement = getDeltaMovement();
         setYRot((float) (Mth.atan2(deltaMovement.x, deltaMovement.z) * Mth.RAD_TO_DEG));
-        applyGravity();
+        //applyGravity();
 
-        deltaMovement = getDeltaMovement();
+        //deltaMovement = getDeltaMovement();
         move(MoverType.SELF, deltaMovement);
 
-        if (level().isClientSide()) {
-            return;
-        }
+        if (level().isClientSide()) return;
 
         Vec3 motion = getDeltaMovement();
         if (motion.x != deltaMovement.x || motion.y != deltaMovement.y || motion.z != deltaMovement.z) {
