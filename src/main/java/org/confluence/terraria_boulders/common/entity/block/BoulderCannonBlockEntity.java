@@ -29,25 +29,6 @@ import org.jspecify.annotations.NonNull;
 import java.util.UUID;
 
 public class BoulderCannonBlockEntity extends BlockEntity implements Container {
-    //private ItemStack cannonAmmo = ItemStack.EMPTY;
-//    public static final IntegerProperty ROTATION = BlockStateProperties.ROTATION_16;
-//    public static final EnumProperty<CannonPitch> PITCH = EnumProperty.create("pitch", CannonPitch.class);
-//
-//    //Pitch有5个档位，向下、斜向下、平射、斜向上、向上
-//    public enum CannonPitch implements StringRepresentable {
-//        DOWN("down"),
-//        DOWN_SLANT("down_slant"),
-//        HORIZONTAL("horizontal"),
-//        UP_SLANT("up_slant"),
-//        UP("up");
-//
-//        private final String name;
-//        CannonPitch(String name) { this.name = name; }
-//
-//        @Override
-//        @NonNull
-//        public String getSerializedName() { return this.name; }
-//    }
     private final int CAPACITY = 1;
     //存储弹药（容量为1）
     private final NonNullList<ItemStack> cannonAmmo = NonNullList.withSize(this.CAPACITY, ItemStack.EMPTY);
@@ -75,17 +56,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
 
     //----------Getter and Setter----------
 
-//    public ItemStack getCannonAmmo() {
-//        return this.cannonAmmo;
-//    }
-//
-//    /**此方法会自动处理复制ItemStack*/
-//    public void setCannonAmmo(ItemStack cannonAmmo) {
-//        this.cannonAmmo = cannonAmmo.copy();
-//        this.cannonAmmo.setCount(1);
-//        this.setChanged();
-//    }
-
     public ItemStack getCannonAmmo() {
         return this.cannonAmmo.getFirst();
     }
@@ -97,45 +67,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         this.cannonAmmo.set(0, stack);
         this.setChanged();
     }
-
-    //设置瞄准状态
-//    public void setAimingMode(boolean aiming, UUID controllerId) {
-//        if (aiming) {
-//            this.isAimingMode = true;
-//            this.controllerId = controllerId;
-//        } else{
-//            this.isAimingMode = false;
-//            this.controllerId = null;
-//        }
-//    }
-
-    //智能翻转状态
-//    public void setAimingMode(UUID controllerId) {
-//        if(this.isAimingMode){
-//            setAimingMode(false, null);
-//        } else{
-//            setAimingMode(true, controllerId);
-//        }
-//    }
-
-    //调节炮口高度
-//    public void nextPitch(Level level, BlockPos pos, BlockState state){
-//
-//        //获取当前档位
-//        CannonPitch currentPitch = state.getValue(PITCH);
-//
-//        //计算下一个档位 (循环切换)
-//        CannonPitch[] values = CannonPitch.values();
-//        int nextIndex = (currentPitch.ordinal() + 1) % values.length;
-//        CannonPitch nextPitch = values[nextIndex];
-//
-//        //状态更新
-//        level.setBlock(pos, state.setValue(PITCH, nextPitch), 3);
-//
-//        //音效
-//        level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, 1.2F + (nextIndex * 0.1F));
-//        level.gameEvent(null, GameEvent.BLOCK_CHANGE, pos);
-//    }
 
     public static void tick(Level level, BlockPos pos, BlockState state, BoulderCannonBlockEntity be) {
         be.currentYawO = be.getCurrentYaw();
@@ -371,7 +302,12 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
         //只有巨石才允许进入
-        return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof BoulderBlock;
+        boolean isBoulder = stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
+
+        //检查是否已满
+        boolean isSlotEmpty = this.getItem(slot).isEmpty();
+
+        return isBoulder && isSlotEmpty;
     }
 
     @Override

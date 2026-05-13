@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -25,10 +26,12 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
+import net.neoforged.neoforge.common.Tags;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderEntity;
 import org.confluence.terraria_boulders.init.ModDataComponents;
+import org.confluence.terraria_boulders.init.ModTags;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
@@ -185,14 +188,45 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
                     be.setLocked(false);
                     level.playSound(null, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);//刮蜡音效
                     level.levelEvent(null, 3004, pos, 0);//斧头除蜡音效
-                    stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {
-                    });
+                    stack.hurtAndBreak(1, (ServerLevel) level, player instanceof ServerPlayer sp ? sp : null, item2 -> {});
                     updateAndChangeState(level, pos, state, be);
                 }
                 return InteractionResult.SUCCESS;
             }
+
+            //触发可交互方块陷阱
+            if (currentMimic != null && !currentMimic.isAir()) {
+                if (shouldTriggerTrap(currentMimic)) {
+                    if (!level.isClientSide()) {
+                        //触发巨石
+                        this.onExecute(state, (ServerLevel) level, pos);
+                    }
+                    return InteractionResult.SUCCESS;
+                }
+            }
         }
         return InteractionResult.TRY_WITH_EMPTY_HAND;
+    }
+
+    //伪装方块是否应该触发陷阱
+    private boolean shouldTriggerTrap(BlockState mimicState) {
+        //是否在名单上
+        if (mimicState.is(ModTags.Blocks.MANUAL_TRAP_TRIGGERS)) {
+            return true;
+        }
+
+        //检查常见交互性标签，这些方块通常不带be，所以需要通过标签识别
+        if (mimicState.is(BlockTags.BUTTONS) || mimicState.is(BlockTags.DOORS) || mimicState.is(BlockTags.TRAPDOORS) || mimicState.is(BlockTags.FENCE_GATES)) {
+            return true;
+        }
+
+        //检查nf通用容器标签
+        if (mimicState.is(Tags.Blocks.CHESTS) || mimicState.is(Tags.Blocks.BARRELS)) {
+            return true;
+        }
+
+        //是否拥有be
+        return mimicState.hasBlockEntity();
     }
 
     //代理物理碰撞箱（noPhysics问题）
@@ -201,7 +235,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimicState = be.getMimicState();
-            if (mimicState != null && !mimicState.isAir()) {
+            if (isValidMimic(mimicState)) {
                 return mimicState.getCollisionShape(level, pos, context);
             }
         }
@@ -214,7 +248,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimicState = be.getMimicState();
-            if (mimicState != null && !mimicState.isAir()) {
+            if (isValidMimic(mimicState)) {
                 return mimicState.getShape(level, pos, context);
             }
         }
@@ -226,7 +260,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimicState = be.getMimicState();
-            if (mimicState != null && !mimicState.isAir()) {
+            if (isValidMimic(mimicState)) {
                 return mimicState.getShadeBrightness(level, pos);
             }
         }
@@ -244,7 +278,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimicState = be.getMimicState();
-            if (mimicState != null && !mimicState.isAir()) {
+            if (isValidMimic(mimicState)) {
                 return mimicState.getVisualShape(level, pos, context);
             }
         }
@@ -256,7 +290,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
             BlockState mimicState = be.getMimicState();
-            if (mimicState != null && !mimicState.isAir()) {
+            if (isValidMimic(mimicState)) {
                 //读取目标方块发光亮度
                 return mimicState.getLightEmission(level, pos);
             }
@@ -268,9 +302,9 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
-            BlockState mimic = be.getMimicState();
-            if (mimic != null && !mimic.isAir()) {
-                return mimic.getSoundType(level, pos, entity);
+            BlockState mimicState = be.getMimicState();
+            if (isValidMimic(mimicState)) {
+                return mimicState.getSoundType(level, pos, entity);
             }
         }
         return super.getSoundType(state, level, pos, entity);
@@ -279,13 +313,18 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     public void spawnDestroyParticles(Level level, Player player, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be) {
-            BlockState mimic = be.getMimicState();
-            if (mimic != null && !mimic.isAir()) {
-                level.levelEvent(player, 2001, pos, Block.getId(mimic));
+            BlockState mimicState = be.getMimicState();
+            if (isValidMimic(mimicState)) {
+                level.levelEvent(player, 2001, pos, Block.getId(mimicState));
                 return;
             }
         }
         super.spawnDestroyParticles(level, player, pos, state);
+    }
+
+    //防止无限递归的检查方法
+    private boolean isValidMimic(BlockState mimicState) {
+        return mimicState != null && !mimicState.isAir() && !(mimicState.getBlock() instanceof CamouflagedBoulderBlock);
     }
 
     @Override
