@@ -11,12 +11,12 @@ public class BoulderCannonRenderState extends BlockEntityRenderState {
     public float pitchO;
     public boolean isEmpty;
     public float partialTicks;
-
-    public float getLerpYaw() {
-        return Mth.rotLerp(partialTicks, yawO, yaw);
-    }
-
-    public float getLerpPitch() {
-        return Mth.lerp(partialTicks, pitchO, pitch);
-    }
+//
+//    public float getLerpYaw() {
+//        return Mth.rotLerp(partialTicks, yawO, yaw);
+//    }
+//
+//    public float getLerpPitch() {
+//        return Mth.lerp(partialTicks, pitchO, pitch);
+//    }
 }

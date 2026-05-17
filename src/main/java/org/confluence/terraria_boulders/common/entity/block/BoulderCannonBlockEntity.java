@@ -10,10 +10,8 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -22,11 +20,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
+import net.minecraft.world.phys.AABB;
 import org.confluence.terraria_boulders.init.ModBlockEntityTypes;
 import org.jspecify.annotations.NonNull;
-
-import java.util.UUID;
 
 public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     private final int CAPACITY = 1;
@@ -43,8 +39,8 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     //旋转速度（per tick）
     private static final float ROTATION_SPEED = 5.0F;
     //仰角限制
-    private static final float MIN_PITCH = -45.0F;
-    private static final float MAX_PITCH = 45.0F;
+    public static final float MIN_PITCH = -45.0F;
+    public static final float MAX_PITCH = 10.0F;
     //遥控数据
     //public boolean isAimingMode = false;
     //public UUID controllerId = null;
@@ -82,84 +78,16 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
 
             be.soundTicks++;
             //5tick检查一次
-            if (be.soundTicks % 5 == 0) {
+            if (!level.isClientSide() && be.soundTicks % 5 == 0) {
                 level.playSound(null, pos, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 0.3F, 1.2F + level.getRandom().nextFloat() * 0.2F);//略微随机化音调
             }
 
             be.setChanged();
-            if (!level.isClientSide()) {
-                //角度变化时才发包
-                level.sendBlockUpdated(pos, state, state, 3);
-            }
-        }
-
-        //处理调节模式逻辑
-//        if (be.isAimingMode && be.controllerId != null) {
-//            Player player = level.getPlayerByUUID(be.controllerId);
-//
-//            //防止玩家下线、死亡或跑得太远导致大炮卡死
-//            if (player == null || !player.isAlive() || player.distanceToSqr(pos.getCenter()) > 256) {
-//                be.setAimingMode(null);
-//                be.setChanged();
-//                if (!level.isClientSide()) {
-//                    level.sendBlockUpdated(pos, state, state, 3);
-//                }
-//            }
-//            else if (player.isShiftKeyDown()) {
-//                be.setAimingMode(null);
-//                be.setChanged();
-//                if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-//                    //锁定音效
-//                    serverLevel.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1.0F, 1.5F);
-//                    level.sendBlockUpdated(pos, state, state, 3);
-//                }
-//            }
-//            else {
-//                //获取玩家当前的视线角度并设为大炮的目标角度
-//                be.targetYaw = player.getYRot();
-//                be.targetPitch = player.getXRot();
-//
-//                //炮口激光粒子
-//                if (level instanceof ServerLevel serverLevel) {
-//                    //计算当前炮口朝向向量
-//                    double yawRad = Math.toRadians(be.currentYaw);
-//                    double pitchRad = Math.toRadians(be.currentPitch);
-//                    double dx = -Math.sin(yawRad) * Math.cos(pitchRad);
-//                    double dy = -Math.sin(pitchRad);
-//                    double dz = Math.cos(yawRad) * Math.cos(pitchRad);
-//
-//                    //计算炮口的精确三维坐标假设炮管长度为1.2格
-//                    double muzzleX = pos.getX() + 0.5D + dx * 1.2D;
-//                    double muzzleY = pos.getY() + 0.5D + dy * 1.2D;
-//                    double muzzleZ = pos.getZ() + 0.5D + dz * 1.2D;
-//
-//                    //使用红石粒子绘制一个红色的瞄准点
-//                    serverLevel.sendParticles(
-//                            new DustParticleOptions(0XFF0000, 0.8F),
-//                            muzzleX, muzzleY, muzzleZ,
-//                            1, 0, 0, 0, 0
-//                    );
-//
-//                    //长激光线
-//                    for(int i = 1; i <= 5; i++) {
-//                        serverLevel.sendParticles(ParticleTypes.CRIT, pos.getX() + 0.5D + dx * i, pos.getY() + 0.5D + dy * i, pos.getZ() + 0.5D + dz * i, 1, 0, 0, 0, 0);
-//                    }
-//                }
-//            }
-//        }
-//
-//        //平滑移动逻辑让当前角度以一定速度靠近目标角度
-//        if (be.currentYaw != be.targetYaw || be.currentPitch != be.targetPitch) {
-//            float speed = 4.0F; //大炮的旋转速度每tick转多少度
-//            be.currentYaw = wrapAndMove(be.currentYaw, be.targetYaw, speed);
-//            be.currentPitch = wrapAndMove(be.currentPitch, be.targetPitch, speed);
-//
-//            //当角度正在发生变化时标记更新通知客户端重绘模型
-//            be.setChanged();
 //            if (!level.isClientSide()) {
+//                //角度变化时才发包
 //                level.sendBlockUpdated(pos, state, state, 3);
 //            }
-//        }
+        }
     }
 
     //辅助方法处理角度的平滑逼近并解决360度跨界问题
@@ -174,17 +102,8 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-//        if (this.cannonAmmo != ItemStack.EMPTY) {
-//            output.storeNullable("CannonAmmo", ItemStack.CODEC, this.cannonAmmo);
-//        }
         //保存物品数据
         ContainerHelper.saveAllItems(output, this.cannonAmmo);
-
-        //保存遥控数据
-//        output.putBoolean("IsAimingMode", this.isAimingMode);
-//        if (this.controllerId != null) {
-//            output.putUUID("ControllerId", this.controllerId);
-//        }
         output.putFloat("CurrentYaw", this.getCurrentYaw());
         output.putFloat("CurrentPitch", this.getCurrentPitch());
         output.putFloat("TargetYaw", this.targetYaw);
@@ -194,23 +113,13 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-//        ItemStack savedAmmo = input.read("CannonAmmo", ItemStack.CODEC).orElse(ItemStack.EMPTY);
-//        if (savedAmmo != ItemStack.EMPTY) {
-//            this.setCannonAmmo(savedAmmo);
-//        }
         //读取物品数据
         this.cannonAmmo.clear();
         ContainerHelper.loadAllItems(input, this.cannonAmmo);
-
-        //读取遥控数据
-//        this.isAimingMode = tag.getBoolean("IsAimingMode");
-//        if (tag.hasUUID("ControllerId")) {
-//            this.controllerId = tag.getUUID("ControllerId");
-//        }
-
         //读取目标值
-        this.targetYaw = input.getFloatOr("TargetYaw", 0);
-        this.setTargetPitch(input.getFloatOr("TargetPitch", 0));
+        //this.targetYaw = input.getFloatOr("TargetYaw", 0);
+        //this.setTargetPitch(input.getFloatOr("TargetPitch", 0));
+        this.setTarget(input.getFloatOr("TargetYaw", 0), input.getFloatOr("TargetPitch", 0));
 
         //当current是初始值0的时候才去同步
         if (this.getCurrentYaw() == 0) {
@@ -224,8 +133,8 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         //存进去发给客户端
-        tag.putFloat("CurrentYaw", this.currentYaw);
-        tag.putFloat("CurrentPitch", this.currentPitch);
+//        tag.putFloat("CurrentYaw", this.currentYaw);
+//        tag.putFloat("CurrentPitch", this.currentPitch);
         tag.putFloat("TargetYaw", this.targetYaw);
         tag.putFloat("TargetPitch", this.targetPitch);
         return tag;
@@ -236,13 +145,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
-
-    //处理更新标签（在客户端接收到数据包时调用）
-    // 注意：NeoForge/Forge 有时会通过 loadAdditional 处理，但为了保险建议重写此方法
-//    @Override
-//    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
-//        this.loadAdditional(tag, registries);
-//    }
 
     @Override
     public int getContainerSize() {
@@ -329,10 +231,37 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     }
 
     public void setCurrentPitch(float currentPitch) {
-        this.currentPitch = Mth.clamp(currentPitch, -45, 10);
+        this.currentPitch = Mth.clamp(currentPitch, MIN_PITCH, MAX_PITCH);
     }
 
-    public void setTargetPitch(float targetPitch) {
-        this.targetPitch = Mth.clamp(targetPitch, -45, 10);
+//    public void setTarget(float newTargetYaw, float newTargetPitch){
+//        this.targetYaw = newTargetYaw;
+//        this.targetPitch = newTargetPitch;
+//        this.setChanged();
+//        //只有收到新指令才给客户端发包
+//        if (this.level != null && !this.level.isClientSide()) {
+//            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+//        }
+//    }
+
+    public void setTarget(float newTargetYaw, float newTargetPitch) {
+        //将目标角度也限制在合法区间内，防止产生永远达不到的终点
+        newTargetPitch = Mth.clamp(newTargetPitch, MIN_PITCH, MAX_PITCH);
+
+        //只有当玩家视角变化超过1度时，才更新目标并发送数据包
+        if (Math.abs(Mth.degreesDifference(this.targetYaw, newTargetYaw)) > 1.0f || Math.abs(this.targetPitch - newTargetPitch) > 1.0f) {
+            this.targetYaw = newTargetYaw;
+            this.targetPitch = newTargetPitch;
+            this.setChanged();
+
+            //发包
+            if (this.level != null && !this.level.isClientSide()) {
+                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+            }
+        }
     }
+
+//    public void setTargetPitch(float targetPitch) {
+//        this.targetPitch = Mth.clamp(targetPitch, -45, 10);
+//    }
 }

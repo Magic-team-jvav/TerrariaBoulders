@@ -35,8 +35,9 @@ public class CannonSeatEntity extends Entity {
         Entity passenger = this.getFirstPassenger();
         if (passenger != null) {
             //让大炮的目标角度等于玩家的视角
-            be.targetYaw = passenger.getYRot();
-            be.setTargetPitch(passenger.getXRot());
+            //be.targetYaw = passenger.getYRot();
+            //be.setTargetPitch(passenger.getXRot());
+            be.setTarget(passenger.getYRot(), passenger.getXRot());
 
             //让座位实体本身也跟着玩家转，防止玩家下车时视角乱飘
             this.setYRot(passenger.getYRot());

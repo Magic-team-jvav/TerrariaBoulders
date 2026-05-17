@@ -94,9 +94,10 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         float initialPitch = 0f;//默认平射
 
         be.setCurrentYaw(initialYaw);
-        be.targetYaw = initialYaw;
+        //be.targetYaw = initialYaw;
         be.setCurrentPitch(initialPitch);
-        be.setTargetPitch(initialPitch);
+        //be.setTargetPitch(initialPitch);
+        be.setTarget(initialYaw, initialPitch);
 
         //标记更新，确保发给客户端
         be.setChanged();
@@ -182,6 +183,14 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         }
         //调节角度
         if (stack.isEmpty() && !player.isShiftKeyDown()) {
+
+            //同时在客户端和服务端中改变玩家角度为大炮角度
+            player.setYRot(be.getCurrentYaw());
+            player.setXRot(be.getCurrentPitch());
+            player.setYHeadRot(be.getCurrentYaw());//把头也扭过去
+            player.yRotO = be.getCurrentYaw(); //更新上一帧数据，防止插值导致的1帧残影
+            player.xRotO = be.getCurrentPitch();
+
             if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
                 return InteractionResult.SUCCESS;
             }
@@ -198,7 +207,8 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
                 return InteractionResult.SUCCESS;
             }
 
-            seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.2D, pos.getZ() + 0.5D);
+            //seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.2D, pos.getZ() + 0.5D);
+            seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D);
             serverLevel.addFreshEntity(seat);
 
             //骑上
@@ -258,13 +268,9 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
      * 具体的发射方法
      */
     protected void fire(Level level, BlockPos pos, ItemStack boulderItemStack, BlockItem boulderBlockItem, BlockState blockState, BoulderBlock boulderBlock) {
-        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) return;
 
-        if (!(level.getBlockEntity(pos) instanceof BoulderCannonBlockEntity be)) {
-            return;
-        }
+        if (!(level.getBlockEntity(pos) instanceof BoulderCannonBlockEntity be)) return;
 
         BlockState mimicState = boulderBlock.defaultBlockState();
 
@@ -276,13 +282,13 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         //获取朝向向量
         Vec3 lookVec = Vec3.directionFromRotation(be.getCurrentPitch(), be.getCurrentYaw());
 
-        //调整生成位置（大炮中心坐标 + 朝向向量 * 偏移距离（0.7格））
-        Vec3 spawnPos = pos.getCenter().add(lookVec.scale(0.7D));
+        //调整生成位置）
+        Vec3 spawnPos = new Vec3(pos.getX() + 0.5D, pos.getY() + 0.75D, pos.getZ() + 0.5D).add(lookVec.scale(2.0D));
 
         BoulderEntity entity = boulderBlock.createBoulderEntity(level, spawnPos, mimicState);
 
         //初速度
-        double speed = 2D;
+        double speed = 2.5D;
         //Y轴加点抛物线，防止贴地滑行
         entity.setDeltaMovement(lookVec.scale(speed));
 

@@ -17,6 +17,7 @@ import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
+import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
 import org.confluence.terraria_boulders.client.model.CamouflagedBoulderModel;
 import org.confluence.terraria_boulders.client.model.MiniBoulderCannonModel;
 import org.confluence.terraria_boulders.client.renderer.BoulderCannonRenderer;
@@ -67,11 +68,13 @@ public class ModClientEvent {
     }
 
     //全局标识符
-    public static final ModelLayerLocation CANNON_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "mini_boulder_cannon"), "main");
+    public static final ModelLayerLocation MINI_CANNON_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "mini_boulder_cannon"), "main");
+    public static final ModelLayerLocation CANNON_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "boulder_cannon"), "main");
 
     //注册层结构
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(CANNON_LAYER, MiniBoulderCannonModel::createBodyLayer);
+        event.registerLayerDefinition(MINI_CANNON_LAYER, MiniBoulderCannonModel::createBodyLayer);
+        event.registerLayerDefinition(CANNON_LAYER, BoulderCannonModel::createBodyLayer);
     }
 }
