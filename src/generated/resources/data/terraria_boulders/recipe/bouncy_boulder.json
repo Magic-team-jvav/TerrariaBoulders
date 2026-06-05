@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:slime_ball"
+  ],
+  "result": {
+    "id": "terraria_boulders:bouncy_boulder"
+  }
+}

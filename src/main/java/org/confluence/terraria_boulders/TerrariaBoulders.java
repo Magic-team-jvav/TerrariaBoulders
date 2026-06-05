@@ -15,6 +15,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
+import org.confluence.terraria_boulders.datagen.ModDatagen;
 import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.confluence.terraria_boulders.init.*;
 import org.jetbrains.annotations.Contract;
@@ -38,6 +39,7 @@ public class TerrariaBoulders {
         ModCreativeModeTabs.REGISTRY.register(modEventBus);
         ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
+        modEventBus.addListener(ModDatagen::gatherData);
     }
 
     @SubscribeEvent
