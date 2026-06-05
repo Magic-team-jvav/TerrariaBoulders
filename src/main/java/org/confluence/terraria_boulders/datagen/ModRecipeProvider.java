@@ -22,6 +22,7 @@ public class ModRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes() {
+        // 巨石 一圈石头中间铁粒
         shaped(RecipeCategory.REDSTONE, ModItems.BOULDER)
                 .define('S', Items.STONE)
                 .define('I', Items.IRON_NUGGET)
@@ -43,6 +44,11 @@ public class ModRecipeProvider extends RecipeProvider {
         boulderUpgrade(ModItems.CAMOUFLAGED_BOULDER, Items.HONEYCOMB);
     }
 
+    /**
+     * 巨石升级 巨石+物品的无序合成
+     * @param result 合成结果
+     * @param ingredient 升级所需物品
+     */
     private void boulderUpgrade(ItemLike result, ItemLike ingredient) {
         shapeless(RecipeCategory.REDSTONE, result)
                 .requires(ModItems.BOULDER)
