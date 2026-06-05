@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:cactus"
+  ],
+  "result": {
+    "id": "terraria_boulders:rolling_cactus_boulder"
+  }
+}

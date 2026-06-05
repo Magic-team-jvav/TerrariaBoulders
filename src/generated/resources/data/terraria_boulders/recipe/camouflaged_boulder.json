@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:honeycomb"
+  ],
+  "result": {
+    "id": "terraria_boulders:camouflaged_boulder"
+  }
+}

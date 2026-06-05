@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:spider_eye"
+  ],
+  "result": {
+    "id": "terraria_boulders:spider_boulder"
+  }
+}

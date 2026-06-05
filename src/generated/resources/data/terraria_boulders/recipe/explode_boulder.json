@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:tnt"
+  ],
+  "result": {
+    "id": "terraria_boulders:explode_boulder"
+  }
+}

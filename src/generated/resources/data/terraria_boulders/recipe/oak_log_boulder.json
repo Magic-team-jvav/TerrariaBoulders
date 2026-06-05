@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:oak_log"
+  ],
+  "result": {
+    "id": "terraria_boulders:oak_log_boulder"
+  }
+}
