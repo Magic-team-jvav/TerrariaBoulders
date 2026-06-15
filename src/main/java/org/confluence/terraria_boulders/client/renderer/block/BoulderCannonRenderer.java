@@ -1,4 +1,4 @@
-package org.confluence.terraria_boulders.client.renderer;
+package org.confluence.terraria_boulders.client.renderer.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -18,23 +19,18 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
-import org.confluence.terraria_boulders.client.model.MiniBoulderCannonModel;
-import org.confluence.terraria_boulders.client.state.BoulderCannonRenderState;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
 import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.jspecify.annotations.NonNull;
 
-public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonBlockEntity, BoulderCannonRenderState> {
-    //private final MiniBoulderCannonModel model;
-    //private final BoulderCannonModel model;
-    // 🚀 核心破解法：双生模型！彻底避开 1.21 的延迟渲染竞争Bug
+public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonBlockEntity, BoulderCannonRenderer.BoulderCannonRenderState> {
+    // 双模型，防竞争
     private final BoulderCannonModel modelBase;
     private final BoulderCannonModel modelBarrel;
     private static final Identifier TEXTURE_LOADED = Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "textures/block/boulder_cannon.png");
     private static final Identifier TEXTURE_EMPTY = Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "textures/block/boulder_cannon_empty.png");
 
     public BoulderCannonRenderer(BlockEntityRendererProvider.Context context) {
-        //this.model = new BoulderCannonModel(context.bakeLayer(ModClientEvent.CANNON_LAYER));
         //模型一：画底座，隐藏炮管
         this.modelBase = new BoulderCannonModel(context.bakeLayer(ModClientEvent.CANNON_LAYER));
         this.modelBase.body.visible = false;
@@ -42,36 +38,33 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
         this.modelBarrel = new BoulderCannonModel(context.bakeLayer(ModClientEvent.CANNON_LAYER));
     }
 
-    @Override
-    public BoulderCannonRenderState createRenderState() {
-        return new BoulderCannonRenderState();
-    }
-
-//    @Override
-//    public void extractRenderState(BoulderCannonBlockEntity be, BoulderCannonRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
-//        BlockEntityRenderer.super.extractRenderState(be, state, partialTicks, cameraPosition, breakProgress);
-//        state.yaw = be.getCurrentYaw();
-//        state.yawO = be.currentYawO;
-//        state.pitch = be.getCurrentPitch();
-//        state.pitchO = be.currentPitchO;
-//        state.partialTicks = partialTicks;
+    public static class BoulderCannonRenderState extends BlockEntityRenderState {
+        public float yaw;
+        public float yawO;
+        public float pitch;
+        public float pitchO;
+        public boolean isEmpty;
+        public float partialTicks;
 //
-//        //提取装填状态
-//        state.isEmpty = be.getCannonAmmo().isEmpty();
-//
-//        //获取大炮位置世界亮度，存入state
-//        if (be.getLevel() != null) {
-//            state.lightCoords = LevelRenderer.getLightCoords(be.getLevel(), be.getBlockPos());
-//        } else {
-//            state.lightCoords = 15728880;
-//        }
+//    public float getLerpYaw() {
+//        return Mth.rotLerp(partialTicks, yawO, yaw);
 //    }
+//
+//    public float getLerpPitch() {
+//        return Mth.lerp(partialTicks, pitchO, pitch);
+//    }
+    }
 
     @Override
     @NonNull
     public AABB getRenderBoundingBox(BoulderCannonBlockEntity blockEntity) {
         //将默认的1x1x1渲染判定框向四周各扩大2格，防止视锥体剔除
         return new AABB(blockEntity.getBlockPos()).inflate(2.0D);
+    }
+
+    @Override
+    public BoulderCannonRenderState createRenderState() {
+        return new BoulderCannonRenderState();
     }
 
     @Override
@@ -112,6 +105,7 @@ public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonB
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
 
         Identifier currentTexture = state.isEmpty ? TEXTURE_EMPTY : TEXTURE_LOADED;
+        //Identifier currentTexture = TEXTURE_LOADED;
         RenderType renderType = RenderTypes.entityCutout(currentTexture);
 
         //提交静止的底盘

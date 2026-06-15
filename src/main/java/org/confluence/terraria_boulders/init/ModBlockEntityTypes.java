@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
 import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
+import org.confluence.terraria_boulders.common.entity.block.GiantBoulderBlockEntity;
 
 public final class ModBlockEntityTypes {
     public static final DeferredRegister<BlockEntityType<?>> REGISTER = TerrariaBoulders.modRegister(Registries.BLOCK_ENTITY_TYPE);
@@ -14,6 +15,10 @@ public final class ModBlockEntityTypes {
     //伪装巨石
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CamouflagedBoulderBlockEntity>> CAMOUFLAGED_BOULDER =
             REGISTER.register("camouflaged_boulder", () -> new BlockEntityType<>(CamouflagedBoulderBlockEntity::new, ModBlocks.CAMOUFLAGED_BOULDER.get()));
+
+    //巨型巨石
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GiantBoulderBlockEntity>> GIANT_BOULDER =
+            REGISTER.register("giant_boulder", () -> new BlockEntityType<>(GiantBoulderBlockEntity::new,  ModBlocks.GIANT_BOULDER.get()));
 
     //巨石大炮
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoulderCannonBlockEntity>> BOULDER_CANNON =

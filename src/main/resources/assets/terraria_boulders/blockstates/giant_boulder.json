@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "": {
+      "model": "terraria_boulders:block/giant_boulder",
+      "scale": [3.0, 3.0, 3.0]
+    }
+  }
+}

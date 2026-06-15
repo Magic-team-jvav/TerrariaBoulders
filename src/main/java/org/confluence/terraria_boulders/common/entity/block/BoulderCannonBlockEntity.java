@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.phys.AABB;
 import org.confluence.terraria_boulders.init.ModBlockEntityTypes;
 import org.jspecify.annotations.NonNull;
 
@@ -42,8 +41,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     public static final float MIN_PITCH = -45.0F;
     public static final float MAX_PITCH = 10.0F;
     //遥控数据
-    //public boolean isAimingMode = false;
-    //public UUID controllerId = null;
     private int soundTicks = 0;
 
     public BoulderCannonBlockEntity(BlockPos worldPosition, BlockState blockState) {
@@ -83,10 +80,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
             }
 
             be.setChanged();
-//            if (!level.isClientSide()) {
-//                //角度变化时才发包
-//                level.sendBlockUpdated(pos, state, state, 3);
-//            }
         }
     }
 
@@ -117,8 +110,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         this.cannonAmmo.clear();
         ContainerHelper.loadAllItems(input, this.cannonAmmo);
         //读取目标值
-        //this.targetYaw = input.getFloatOr("TargetYaw", 0);
-        //this.setTargetPitch(input.getFloatOr("TargetPitch", 0));
         this.setTarget(input.getFloatOr("TargetYaw", 0), input.getFloatOr("TargetPitch", 0));
 
         //当current是初始值0的时候才去同步
@@ -133,8 +124,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         //存进去发给客户端
-//        tag.putFloat("CurrentYaw", this.currentYaw);
-//        tag.putFloat("CurrentPitch", this.currentPitch);
         tag.putFloat("TargetYaw", this.targetYaw);
         tag.putFloat("TargetPitch", this.targetPitch);
         return tag;
@@ -234,16 +223,6 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         this.currentPitch = Mth.clamp(currentPitch, MIN_PITCH, MAX_PITCH);
     }
 
-//    public void setTarget(float newTargetYaw, float newTargetPitch){
-//        this.targetYaw = newTargetYaw;
-//        this.targetPitch = newTargetPitch;
-//        this.setChanged();
-//        //只有收到新指令才给客户端发包
-//        if (this.level != null && !this.level.isClientSide()) {
-//            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
-//        }
-//    }
-
     public void setTarget(float newTargetYaw, float newTargetPitch) {
         //将目标角度也限制在合法区间内，防止产生永远达不到的终点
         newTargetPitch = Mth.clamp(newTargetPitch, MIN_PITCH, MAX_PITCH);
@@ -260,8 +239,4 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
             }
         }
     }
-
-//    public void setTargetPitch(float targetPitch) {
-//        this.targetPitch = Mth.clamp(targetPitch, -45, 10);
-//    }
 }

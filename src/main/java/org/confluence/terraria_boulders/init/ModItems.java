@@ -22,6 +22,7 @@ import org.confluence.terraria_boulders.common.block.boulder.FullCollisionBoulde
 import org.confluence.terraria_boulders.common.entity.boulder.*;
 import org.confluence.terraria_boulders.common.item.CamouflagedBoulderItem;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,10 @@ public final class ModItems {
     public static final DeferredItem<CamouflagedBoulderItem> CAMOUFLAGED_BOULDER =
             REGISTER.registerItem("camouflaged_boulder",
                     (properties) -> new CamouflagedBoulderItem(ModBlocks.CAMOUFLAGED_BOULDER.get(), properties.component(ModDataComponents.IS_LOCKED.get(), false)));//伪装巨石
+    public static final DeferredItem<BlockItem> GIANT_BOULDER = REGISTER.registerSimpleBlockItem(ModBlocks.GIANT_BOULDER);//巨型巨石
     public static final DeferredItem<BlockItem> BOULDER_CANNON = REGISTER.registerSimpleBlockItem(ModBlocks.BOULDER_CANNON);//巨石大炮
+
+
 
     public static DeferredItem<BlockItem> registerBlockItemFood(String name, Item.Properties properties, Holder<? extends Block> block) {
         return REGISTER.registerItem(name, (properties1) -> new BlockItem(block.value(), properties1), () -> properties);

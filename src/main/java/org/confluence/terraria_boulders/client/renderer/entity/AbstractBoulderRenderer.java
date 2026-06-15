@@ -1,4 +1,4 @@
-package org.confluence.terraria_boulders.client.renderer;
+package org.confluence.terraria_boulders.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

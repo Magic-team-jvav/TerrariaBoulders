@@ -258,12 +258,6 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-//    @Override
-//    @NonNull
-//    public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult){
-//        return InteractionResult.PASS;
-//    }
-
     /**
      * 具体的发射方法
      */
@@ -304,9 +298,7 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         //炮口生成烟雾粒子
         serverLevel.sendParticles(
                 net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                spawnPos.x,
-                spawnPos.y,
-                spawnPos.z,
+                spawnPos.x, spawnPos.y, spawnPos.z,
                 15,//粒子数量
                 0.2, 0.2, 0.2,//扩散范围
                 0.05//粒子速度

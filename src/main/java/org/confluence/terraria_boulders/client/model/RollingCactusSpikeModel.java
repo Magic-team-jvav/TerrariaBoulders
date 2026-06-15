@@ -6,7 +6,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import org.confluence.terraria_boulders.TerrariaBoulders;
-import org.confluence.terraria_boulders.client.renderer.RollingCactusSpikeRenderer;
+import org.confluence.terraria_boulders.client.renderer.entity.RollingCactusSpikeRenderer;
 
 public class RollingCactusSpikeModel extends EntityModel<RollingCactusSpikeRenderer.RollingCactusSpikeRenderState> {
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(TerrariaBoulders.modRl("rolling_cactus_spike"), "main");

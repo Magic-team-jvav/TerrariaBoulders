@@ -90,7 +90,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     }
 
     @Override
-    protected <T extends BoulderEntity> void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
+    protected void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
         super.summonBoulder(level, pos, blockState, function);
     }
 

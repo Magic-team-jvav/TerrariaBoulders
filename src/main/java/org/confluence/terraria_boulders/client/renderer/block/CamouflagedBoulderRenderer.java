@@ -1,34 +1,26 @@
-package org.confluence.terraria_boulders.client.renderer;
+package org.confluence.terraria_boulders.client.renderer.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.BlockModelResolver;
 import net.minecraft.client.renderer.block.model.BlockDisplayContext;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
 import org.jspecify.annotations.NonNull;
 
-public class CamouflagedBoulderBER implements BlockEntityRenderer<CamouflagedBoulderBlockEntity, CamouflagedBoulderBER.BoulderBERState> {
+public class CamouflagedBoulderRenderer implements BlockEntityRenderer<CamouflagedBoulderBlockEntity, CamouflagedBoulderRenderer.BoulderBERState> {
     public static final BlockDisplayContext BLOCK_DISPLAY_CONTEXT = BlockDisplayContext.create();//渲染静态上下文
     private final BlockModelResolver blockModelResolver;//方块模型解析器
 
-    public CamouflagedBoulderBER(BlockEntityRendererProvider.Context context) {
+    public CamouflagedBoulderRenderer(BlockEntityRendererProvider.Context context) {
         this.blockModelResolver = context.blockModelResolver();
     }
 

@@ -55,6 +55,12 @@ public class BoulderBlock extends Block {
         summonBoulder(state, level, pos);
     }
 
+    //可能不需要填充
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston, boolean summon) {
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
+        if(summon) summonBoulder(state, level, pos);
+    }
+
     @Override
     public boolean canConnectRedstone(BlockState state, BlockGetter level, BlockPos pos, @Nullable Direction direction) {
         return true;
@@ -87,13 +93,18 @@ public class BoulderBlock extends Block {
         summonBoulder(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
     }
 
-    protected <T extends BoulderEntity> void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<T, Player> function) {
-        @SuppressWarnings("unchecked")
-        T entity = (T) createBoulderEntity(level, pos.getCenter(), blockState);
+    protected void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
+        //调用工厂方法，如果是子类方块，会动态触发子类重写的方法
+        BoulderEntity entity = this.createBoulderEntity(level, pos.getCenter(), blockState);
+        this.onBoulderSummon(level, pos, blockState, function, entity); // 触发钩子
+        level.addFreshEntity(entity);
+    }
+
+    //创建一个钩子，便于子类自定义
+    protected void onBoulderSummon(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function, BoulderEntity entity) {
         if (!level.getBlockState(pos.below()).isAir()) {
             entity.targetTo(function.apply(entity));
         }
-        level.addFreshEntity(entity);
     }
 
     public BoulderEntity createBoulderEntity(Level level, Vec3 pos, BlockState blockState) {

@@ -18,6 +18,7 @@
   "block.terraria_boulders.follower_boulder": "Follower Boulder",
   "block.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder",
   "block.terraria_boulders.boulder_cannon": "Boulder Cannon",
+  "block.terraria_boulders.giant_boulder": "Giant Boulder",
   "death.attack.boulder": "%1$s is crushed by boulder",
   "entity.terraria_boulders.boulder": "Boulder",
   "entity.terraria_boulders.explode_boulder": "Explode Boulder",
@@ -29,5 +30,6 @@
   "entity.terraria_boulders.bouncy_boulder": "Bouncy Boulder",
   "entity.terraria_boulders.lava_boulder": "Lava Boulder",
   "entity.terraria_boulders.oak_log_boulder": "Oak Log Boulder",
-  "entity.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder"
+  "entity.terraria_boulders.camouflaged_boulder": "Camouflaged %s Boulder",
+  "entity.terraria_boulders.giant_boulder": "Giant Boulder"
 }

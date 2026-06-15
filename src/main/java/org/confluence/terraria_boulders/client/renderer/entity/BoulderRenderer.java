@@ -1,6 +1,5 @@
-package org.confluence.terraria_boulders.client.renderer;
+package org.confluence.terraria_boulders.client.renderer.entity;
 
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 
