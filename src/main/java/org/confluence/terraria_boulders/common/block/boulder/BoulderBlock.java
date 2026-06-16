@@ -15,8 +15,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -95,7 +95,7 @@ public class BoulderBlock extends Block {
 
     protected void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
         //调用工厂方法，如果是子类方块，会动态触发子类重写的方法
-        BoulderEntity entity = this.createBoulderEntity(level, pos.getCenter(), blockState);
+        BoulderEntity entity = this.createBoulderEntity(level, pos.getBottomCenter(), blockState);
         this.onBoulderSummon(level, pos, blockState, function, entity); // 触发钩子
         level.addFreshEntity(entity);
     }

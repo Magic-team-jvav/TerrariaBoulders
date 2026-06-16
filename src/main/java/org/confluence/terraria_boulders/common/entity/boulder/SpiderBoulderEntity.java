@@ -36,11 +36,13 @@ public class SpiderBoulderEntity extends BoulderEntity {
     @Override
     protected void removeEffect(ServerLevel serverLevel) {
         super.removeEffect(serverLevel);
-        // TODO 补充WALL_CREEPER
-//        serverLevel.addFreshEntity(ModEntityTypes.WALL_CREEPER);
-        Spider entity = EntityType.SPIDER.create(serverLevel,EntitySpawnReason.MOB_SUMMONED);
-        if (entity != null) {
-            entity.setPos(position());
+        int i1 = level().getRandom().nextInt(1, 4);
+        for (int i = 0; i < i1; i++) {
+            Spider entity = EntityType.SPIDER.create(serverLevel, EntitySpawnReason.MOB_SUMMONED);
+            if (entity == null) {
+                return;
+            }
+            entity.setPos(new Vec3(getRandomX(1.2), getY(), getRandomZ(1.2)));
             serverLevel.addFreshEntity(entity);
         }
     }

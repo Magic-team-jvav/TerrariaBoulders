@@ -12,9 +12,9 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.block.state.BlockState;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
-import org.confluence.terraria_boulders.init.ModBlocks;
 
 public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends AbstractBoulderRenderer.BoulderRenderState> extends EntityRenderer<E, S> {
     public static final BlockDisplayContext BLOCK_DISPLAY_CONTEXT = BlockDisplayContext.create();
@@ -34,6 +34,9 @@ public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends
         state.rotateO = entity.rotateO;
         state.rotate = entity.rotate;
         state.radius = entity.radius;
+        EntityDimensions dimensions = entity.getDimensions(entity.getPose());
+        state.boxWidth = dimensions.width();
+        state.boxHeight = dimensions.height();
         state.maxRemoveTick = entity.maxRemoveTick;
         state.maxStillTick = entity.maxStillTick;
         state.speed = entity.speed;
@@ -64,25 +67,22 @@ public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot - 90.0F));
         float radius = state.radius;
-        poseStack.translate(0, radius, 0);
-        poseStack.mulPose(Axis.ZP.rotation(-Mth.lerp(state.partialTick, state.rotateO, state.rotate)));
+        poseStack.translate(0, state.boxHeight / 2, 0);
+        poseStack.mulPose(Axis.ZP.rotation(-Mth.rotLerp(state.partialTick, state.rotateO, state.rotate)));
         poseStack.translate(-radius, -radius, -radius);
-        if (radius != 0.5F) {
-            float scale = radius * 2;
-            poseStack.scale(scale, scale, scale);
-        }
         displayBlockModel.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
         poseStack.popPose();
     }
 
     public static class BoulderRenderState extends EntityRenderState {
-        public static final BlockState DEFAULTED_BLOCK_STATE = ModBlocks.BOULDER.get().defaultBlockState();
         public BlockModelRenderState displayBlockModel = new BlockModelRenderState();
 
         public float rotateO = 0.0F;
         public float rotate = 0.0F;
 
         public float radius = 0.5F; // 半径
+        public float boxWidth = 1.0f;
+        public float boxHeight = 1.0f;
         public int maxRemoveTick = 1200; // 最大移除时间
         public int maxStillTick = 20; // 最大静止时间
         public double speed = 0.7; // 速度
@@ -93,7 +93,7 @@ public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends
 
         public int stillTickCount; // 静止刻计时
 
-        public BlockState blockState = DEFAULTED_BLOCK_STATE;
+        public BlockState blockState = BoulderEntity.DEFAULTED_BLOCK_STATE;
         public float yRot;
     }
 }

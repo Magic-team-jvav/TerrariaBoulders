@@ -8,14 +8,14 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class CamouflagedBoulderEntity extends BoulderEntity {
-    private final float NO_COLLISION_BLOCK_RADIUS = 0.1F;
-
     public CamouflagedBoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
     }
@@ -37,11 +37,26 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
 //        rotate(deltaMovement);
 //    }
 
-    //在服务端设置伪装时刷新碰撞箱
+    /**
+     * 从方块状态中提取碰撞箱（或交互箱兜底）的宽高
+     */
+    @Nullable
+    private Vec2 getBlockSize(BlockState state) {
+        VoxelShape shape = state.getCollisionShape(level(), BlockPos.ZERO);
+        if (shape.isEmpty()) {
+            shape = state.getInteractionShape(level(), BlockPos.ZERO);
+        }
+        if (shape.isEmpty()) return null;
+
+        AABB bounds = shape.bounds();
+        return new Vec2((float) Math.max(bounds.getXsize(), bounds.getZsize()), (float) bounds.getYsize());
+    }
+
+    //设置伪装时同步更新碰撞箱
     @Override
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
-        this.refreshDimensionsFromBlock();
+        this.updateDimensions();
     }
 
     @Override
@@ -49,7 +64,7 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
         super.onSyncedDataUpdated(key);
         //方块状态改变了同步更新碰撞箱
         if (getBlockStateAccessor().equals(key)) {
-            refreshDimensionsFromBlock();
+            updateDimensions();
         }
     }
 
@@ -57,38 +72,27 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
     @Override
     @NonNull
     public EntityDimensions getDimensions(Pose pose) {
-        BlockState mimicState = this.getBlockState();
-
-        if (mimicState != null && !mimicState.isAir()) {
-            VoxelShape shape = mimicState.getCollisionShape(this.level(), BlockPos.ZERO);
-            if (!shape.isEmpty()) {
-                AABB bounds = shape.bounds();
-                float width = (float) Math.max(bounds.getXsize(), bounds.getZsize());
-                float height = (float) bounds.getYsize();
-                return EntityDimensions.fixed(width, height);
-            } else {
-                return EntityDimensions.fixed(NO_COLLISION_BLOCK_RADIUS / 2.0F, NO_COLLISION_BLOCK_RADIUS / 2.0F);//无碰撞方块
-            }
+        BlockState state = getBlockState();
+        if (state == null || state.isAir()) {
+            return super.getDimensions(pose);
         }
-        return super.getDimensions(pose);
+        Vec2 size = getBlockSize(state);
+        if (size != null) {
+            return EntityDimensions.fixed(size.x, size.y);
+        }
+        // 无碰撞方块
+        return EntityDimensions.fixed(1, 1);
     }
 
-    //巨石换伪装时主动调用
-    public void refreshDimensionsFromBlock() {
+    //伪装方块改变时主动调用：同步物理体积和滚动半径
+    public void updateDimensions() {
         BlockState state = getBlockState();
-
-        if (state != null && !state.isAir()) {
-            VoxelShape shape = state.getCollisionShape(level(), BlockPos.ZERO);
-            if (!shape.isEmpty()) {
-                AABB bounds = shape.bounds();
-                //同步更新滚动动画半径
-                this.radius = (float) Math.max(bounds.getXsize(), bounds.getZsize()) / 2.0F;
-            } else {
-                this.radius = NO_COLLISION_BLOCK_RADIUS;//无碰撞方块给个极小的半径
-            }
+        if (state == null || state.isAir()) {
+            refreshDimensions();
+            return;
         }
-
-        //刷新黑框和物理体积
-        this.refreshDimensions();
+        Vec2 size = getBlockSize(state);
+        this.radius = size != null ? Math.max(size.x, size.y) / 2.0F : 0.5f;
+        refreshDimensions();
     }
 }

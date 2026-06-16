@@ -1,16 +1,18 @@
 package org.confluence.terraria_boulders.common.entity;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
 
 public class CannonSeatEntity extends Entity {
@@ -53,7 +55,27 @@ public class CannonSeatEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {}
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        passenger.absSnapRotationTo(this.getViewYRot(0.0F), this.getViewXRot(0.0F));
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        super.positionRider(passenger, moveFunction);
+        if (passenger instanceof LivingEntity livingEntity) {
+            livingEntity.yBodyRot = getYRot();
+        }
+    }
+
+    @Override
+    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
+        return super.getPassengerAttachmentPoint(passenger, dimensions, scale).add(0, 0.5, 0);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    }
 
     @Override
     public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float v) {
@@ -61,8 +83,10 @@ public class CannonSeatEntity extends Entity {
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput valueInput) {}
+    protected void readAdditionalSaveData(ValueInput valueInput) {
+    }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput valueOutput) {}
+    protected void addAdditionalSaveData(ValueOutput valueOutput) {
+    }
 }

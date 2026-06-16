@@ -5,8 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -18,19 +16,18 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.*;
-import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.common.ModDamageTypes;
 import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
 import org.confluence.terraria_boulders.init.ModBlocks;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.confluence.terraria_boulders.util.VectorUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +35,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class BoulderEntity extends Projectile {
+    public static final BlockState DEFAULTED_BLOCK_STATE = ModBlocks.BOULDER.get().defaultBlockState();
     public static final float SEARCH_RANGE = 31.5F;
     public static final Predicate<Entity> ENTITY_PREDICATE = entity -> {
         if (!entity.isAlive()) {
@@ -89,14 +87,13 @@ public class BoulderEntity extends Projectile {
         if (!(level() instanceof ServerLevel level)) {
             return;
         }
+        discard();
         removeEffect(level);
         BlockPos blockPos = blockPosition();
         sendRemoveParticle(level, blockPos);
         playRemoveSound(level, blockPos);
-        discard();
     }
 
-    /// 移除前触发的效果
     protected void removeEffect(ServerLevel serverLevel) {
     }
 
@@ -110,10 +107,13 @@ public class BoulderEntity extends Projectile {
                 .getBreakSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
-    /**已重写*/
     @Override
     public void tick() {
         super.tick();
+
+        if (isRemoved()) {
+            return;
+        }
 
         //先施加重力，不然空中水平移动时测不到地板
         applyGravity();
@@ -128,27 +128,45 @@ public class BoulderEntity extends Projectile {
 
         //方块碰撞检测
         Vec3 postMoveVelocity = getDeltaMovement();
-        boolean hitX = Math.abs(postMoveVelocity.x) < Math.abs(preMoveVelocity.x) - 1.0E-5;
-        boolean hitY = Math.abs(postMoveVelocity.y) < Math.abs(preMoveVelocity.y) - 1.0E-5;
-        boolean hitZ = Math.abs(postMoveVelocity.z) < Math.abs(preMoveVelocity.z) - 1.0E-5;
+        boolean hitX = Math.abs(postMoveVelocity.x) <= Math.abs(preMoveVelocity.x) - 0.000001;
+        boolean hitY = Math.abs(postMoveVelocity.y) <= Math.abs(preMoveVelocity.y) - 0.000001;
+        boolean hitZ = Math.abs(postMoveVelocity.z) <= Math.abs(preMoveVelocity.z) - 0.000001;
 
         //分发撞击事件
-        if (hitX) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST, this.blockPosition(), false));
-        if (hitY) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP, this.blockPosition(), false));
-        if (hitZ) onHitBlock(new BlockHitResult(newPos, preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH, this.blockPosition(), false));
+        if (hitX) {
+            onHitBlock(new BlockHitResult(newPos,
+                    preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST, this.blockPosition(),
+                    false));
+        }
+        if (hitY) {
+            onHitBlock(new BlockHitResult(newPos,
+                    preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP, this.blockPosition(),
+                    false));
+        }
+        if (hitZ) {
+            onHitBlock(new BlockHitResult(newPos,
+                    preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH, this.blockPosition(),
+                    false));
+        }
+
+        if (isRemoved()) {
+            return;
+        }
 
         //计算实体碰撞
         onHit(newPos.subtract(oldPos));
 
         //摩擦力、旋转
         applyFrictionAndRotation();
-
         //管理生命周期
         updateLifetime();
     }
 
     protected void rotate(Vec3 deltaMovement) {
         float s = (float) deltaMovement.length();
+        if (onGround()) {
+            s = new Vec2((float) deltaMovement.x, (float) deltaMovement.z).length();
+        }
         float r = s / radius;
         if (rotate > Mth.TWO_PI) this.rotate -= Mth.TWO_PI;
         this.rotateO = rotate;
@@ -159,22 +177,24 @@ public class BoulderEntity extends Projectile {
         double actualSpeed = deltaMovement.length();
 
         //移动或滚动才触发伤害
-        if (actualSpeed > 0.05D || this.rotateO - this.rotate != 0) {
-            //贴合实际运动轨迹的扫描框
-            AABB sweepBox = this.getBoundingBox().expandTowards(-deltaMovement.x, -deltaMovement.y, -deltaMovement.z)/*.inflate(0.01D)*/;
+        if (!(actualSpeed > 0.05D) && this.rotateO - this.rotate == 0) {
+            return;
+        }
 
-            //还原出移动前的位置，用于精确计算相对方向
-            Vec3 oldPos = this.position().subtract(deltaMovement);
+        //贴合实际运动轨迹的扫描框
+        AABB sweepBox = this.getBoundingBox().expandTowards(-deltaMovement.x, -deltaMovement.y, -deltaMovement.z)/*.inflate(0.01D)*/;
 
-            //扫描轨迹上所有实体
-            for (Entity entity : level().getEntities(this, sweepBox, ENTITY_PREDICATE)) {
+        //还原出移动前的位置，用于精确计算相对方向
+        Vec3 oldPos = this.position().subtract(deltaMovement);
 
-                //只对巨石前方的实体造成伤害
-                Vec3 toEntity = entity.position().subtract(oldPos).normalize();
+        //扫描轨迹上所有实体
+        for (Entity entity : level().getEntities(this, sweepBox, ENTITY_PREDICATE)) {
 
-                if (deltaMovement.normalize().dot(toEntity) > 0) {
-                    onHitEntity(new EntityHitResult(entity));//造成伤害
-                }
+            //只对巨石前方的实体造成伤害
+            Vec3 toEntity = entity.position().subtract(oldPos).normalize();
+
+            if (deltaMovement.normalize().dot(toEntity) > 0) {
+                onHitEntity(new EntityHitResult(entity));//造成伤害
             }
         }
     }
@@ -186,8 +206,6 @@ public class BoulderEntity extends Projectile {
 
         //deltaMovement = getDeltaMovement();
         move(MoverType.SELF, deltaMovement);
-
-        if (level().isClientSide()) return;
 
         Vec3 motion = getDeltaMovement();
         if (motion.x != deltaMovement.x || motion.y != deltaMovement.y || motion.z != deltaMovement.z) {
@@ -219,11 +237,12 @@ public class BoulderEntity extends Projectile {
 
     protected void applyFrictionAndRotation() {
         //衰减速度
-        Vec3 deltaMovement = getDeltaMovement().scale(0.99);
-        setDeltaMovement(deltaMovement);
+        Vec3 deltaMovement = getDeltaMovement();
+        Vec3 deltaMovementNew = new Vec3(deltaMovement.x * 0.99f, deltaMovement.y, deltaMovement.z * 0.99f);
+        setDeltaMovement(deltaMovementNew);
 
         //更新旋转弧度
-        rotate(deltaMovement);
+        rotate(deltaMovementNew);
     }
 
     //管理生命周期
@@ -257,17 +276,18 @@ public class BoulderEntity extends Projectile {
         } else {
             horizontalHitBlock(blockHitResult, direction);
         }
-        if (level() instanceof ServerLevel serverLevel) {
-            playHitBlockSound(serverLevel);
-        }
     }
 
-    protected void playHitBlockSound(ServerLevel serverLevel) {
+    protected void playHitBlockSound(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
         serverLevel.playSound(null, blockPosition(), getBlockState().getSoundType().getFallSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
     protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
         onRemove();
+        playHitBlockSound(level());
     }
 
     protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
@@ -277,42 +297,53 @@ public class BoulderEntity extends Projectile {
         }
 
         // 如果水平速度几乎为零则尝试添加水平向量
-        if (getHorizontalVectorLength(getDeltaMovement()) < 0.0001) {
-            // 先尝试获取最近的目标
-            Player nearestPlayer = getNearestPlayer();
-            if (nearestPlayer == null) {
-                // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
-                if (!level.isClientSide()) {
-                    List<Direction> directions = new ArrayList<>();
-                    for (Direction direction1 : Direction.Plane.HORIZONTAL) {
-                        Vec3 position = position();
-                        BlockHitResult clip = level.clip(new ClipContext(position, position.relative(direction1, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-                        if (clip.getType() == HitResult.Type.MISS) {
-                            directions.add(direction1);
-                        }
-                    }
-                    int directionsSize = directions.size();
-                    if (!directions.isEmpty()) {
-                        Direction direction1 = directions.get(directionsSize == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, directionsSize - 1));
-                        setDeltaMovement(getDeltaMovement().relative(direction1, 1).scale(speed));
-                    }
-                }
-            } else {
-                targetTo(nearestPlayer);
+        if (!(getHorizontalVectorLength(getDeltaMovement()) < 0.0001)) {
+            verticalHitRebound(blockHitResult, direction);
+            return;
+        }
+
+        // 先尝试获取最近的目标
+        Player nearestPlayer = getNearestPlayer();
+        if (nearestPlayer != null) {
+            targetTo(nearestPlayer);
+            verticalHitRebound(blockHitResult, direction);
+            return;
+        }
+
+
+        List<Direction> directions = new ArrayList<>();
+        for (Direction direction1 : Direction.Plane.HORIZONTAL) {
+            Vec3 position = position();
+            BlockHitResult clip = level.clip(new ClipContext(position, position.relative(direction1, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            if (clip.getType() == HitResult.Type.MISS) {
+                directions.add(direction1);
             }
+        }
+
+        int directionsSize = directions.size();
+        // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
+        if (!directions.isEmpty() && !level.isClientSide()) {
+            Direction direction1 = directions.get(directionsSize == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, directionsSize - 1));
+            setDeltaMovement(getDeltaMovement().relative(direction1, 1).scale(speed));
         }
 
         verticalHitRebound(blockHitResult, direction);
     }
 
     protected void verticalHitRebound(BlockHitResult blockHitResult, Direction direction) {
-        if (fallDistance > 5) {
-            Vec3 motion = VectorUtils.relativeScale(getDeltaMovement(), blockHitResult.getDirection().getAxis(), -bounceFactor);
-            if (Math.abs(motion.y) < 0.03) motion = new Vec3(motion.x, 0.0, motion.z);
-            setDeltaMovement(motion.scale(frictionFactor));
-            super.onHitBlock(blockHitResult);
-            fallDistance = 0;
+        Vec3 deltaMovement = getDeltaMovement();
+        if (deltaMovement.y > getDefaultGravity()) {
+            playHitBlockSound(level());
         }
+        if (!(fallDistance > 5)) {
+            return;
+        }
+
+        Vec3 motion = VectorUtils.relativeScale(deltaMovement, blockHitResult.getDirection().getAxis(), -bounceFactor);
+        if (Math.abs(motion.y) < 0.03) motion = new Vec3(motion.x, 0.0, motion.z);
+        setDeltaMovement(motion.scale(frictionFactor));
+        super.onHitBlock(blockHitResult);
+        fallDistance = 0;
     }
 
     @Override
@@ -322,10 +353,15 @@ public class BoulderEntity extends Projectile {
 
         // TODO 需要重写
         int i = hitHistory.containsKey(uuid1) ? hitHistory.addTo(uuid1, -1) : 0;
-        if (i <= 0) {
-            entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), 100.0F);
-            hitHistory.put(uuid1, 5);
+        if (i > 0) {
+            return;
         }
+        entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
+        hitHistory.put(uuid1, 5);
+    }
+
+    float getDamage(EntityHitResult entityHitResult) {
+        return 100.0F * (float) Math.clamp(getDeltaMovement().length() * 3, 0, 1);
     }
 
     public void targetToPlayer() {
@@ -340,6 +376,7 @@ public class BoulderEntity extends Projectile {
         Vec3 deltaMovement = getDeltaMovement();
         Vec3 vec3 = entity == null ? deltaMovement : entity.position().subtract(position());
         vec3 = new Vec3(vec3.x, deltaMovement.y, vec3.z).normalize();
+        //noinspection SuspiciousNameCombination
         setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
         setDeltaMovement(vec3.scale(speed));
         this.yRotO = getYRot();
@@ -361,18 +398,28 @@ public class BoulderEntity extends Projectile {
 
     //统一设置方块状态
     public void setBlockState(BlockState state) {
+        //noinspection ConstantValue
+        if (state == null || state.getBlock() == null) {
+            state = DEFAULTED_BLOCK_STATE;
+        }
         this.entityData.set(DATA_BLOCK_STATE, state);
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(DATA_BLOCK_STATE, ModBlocks.BOULDER.get().defaultBlockState());
+        builder.define(DATA_BLOCK_STATE, DEFAULTED_BLOCK_STATE);
     }
 
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         input.read("BlockState", BlockState.CODEC).ifPresent(state -> entityData.set(DATA_BLOCK_STATE, state));
+        // 兜底：读取到的 BlockState 可能为空（旧存档/损坏数据）
+        BlockState current = entityData.get(DATA_BLOCK_STATE);
+        //noinspection ConstantValue
+        if (current == null || current.getBlock() == null) {
+            entityData.set(DATA_BLOCK_STATE, DEFAULTED_BLOCK_STATE);
+        }
         tickCount = input.getIntOr("Age", 0);
         stillTickCount = input.getIntOr("StillAge", 0);
 
@@ -386,7 +433,12 @@ public class BoulderEntity extends Projectile {
 
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
-        output.store("BlockState", BlockState.CODEC, entityData.get(DATA_BLOCK_STATE));
+        BlockState state = entityData.get(DATA_BLOCK_STATE);
+        //noinspection ConstantValue
+        if (state == null || state.getBlock() == null) {
+            state = DEFAULTED_BLOCK_STATE;
+        }
+        output.store("BlockState", BlockState.CODEC, state);
         output.putInt("Age", tickCount);
         output.putInt("StillAge", stillTickCount);
         output.putFloat("Radius", radius);

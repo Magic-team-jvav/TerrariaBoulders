@@ -10,18 +10,21 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 
+/**
+ * 弹力巨石
+ */
 public class BouncyBoulderEntity extends BoulderEntity {
 
     public BouncyBoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
-        speed = 0.9;
-        bounceFactor = 1.2;
+        speed = 0.7;
+        bounceFactor = 0.99999999;
     }
 
     public BouncyBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.BOUNCY_BOULDER.get(), level, pos, blockState);
-        speed = 0.9;
-        bounceFactor = 1.2;
+        speed = 0.7;
+        bounceFactor = 0.99999999;
     }
 
 //    @Override
@@ -34,6 +37,7 @@ public class BouncyBoulderEntity extends BoulderEntity {
 //        }
 //        setDeltaMovement(motion.scale(frictionFactor));
 //    }
+
     @Override
     protected void onHitBlock(BlockHitResult blockHitResult) {
         super.onHitBlock(blockHitResult);
@@ -47,24 +51,31 @@ public class BouncyBoulderEntity extends BoulderEntity {
         //读取预测速度，而不是现在可能撞墙归零了的速度
         if (axis == Direction.Axis.X) {
             currentX = -this.preMoveVelocity.x * bounceFactor;
+            playHitBlockSound(level());
         } else if (axis == Direction.Axis.Y) {
             //下落太慢就只滚动
-            if (Math.abs(this.preMoveVelocity.y) > 0.08) {
+            if (Math.abs(this.preMoveVelocity.y) > getDefaultGravity()) {
                 //计算越弹越高的速度
                 double rawY = -this.preMoveVelocity.y * bounceFactor;
                 currentY = Math.min(rawY, 1.5);//垂直速度保险
+                playHitBlockSound(level());
             } else {
                 currentY = 0.0;
             }
         } else if (axis == Direction.Axis.Z) {
             currentZ = -this.preMoveVelocity.z * bounceFactor;
+            playHitBlockSound(level());
         }
 
         //水平速度保险
-        currentX = Math.max(-1.5, Math.min(currentX, 1.5));
-        currentZ = Math.max(-1.5, Math.min(currentZ, 1.5));
+        currentX = Math.clamp(currentX, -1.5, 1.5);
+        currentZ = Math.clamp(currentZ, -1.5, 1.5);
 
         setDeltaMovement(new Vec3(currentX, currentY, currentZ));
+    }
+
+    @Override
+    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
     }
 
     @Override
@@ -78,8 +89,8 @@ public class BouncyBoulderEntity extends BoulderEntity {
     @Override
     public void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-        this.bounceFactor = input.getDoubleOr("BounceFactor",1.2);
-        this.frictionFactor = input.getDoubleOr("FrictionFactor",0.9);
+        this.bounceFactor = input.getDoubleOr("BounceFactor", 1.2);
+        this.frictionFactor = input.getDoubleOr("FrictionFactor", 0.9);
     }
 
     @Override

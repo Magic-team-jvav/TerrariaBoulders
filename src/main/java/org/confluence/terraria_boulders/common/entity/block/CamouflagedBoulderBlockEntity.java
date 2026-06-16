@@ -36,6 +36,9 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
     //----------Getter and Setter----------
 
     public BlockState getMimicState() {
+        if (mimicState == null) {
+            return Blocks.STONE.defaultBlockState();
+        }
         return mimicState;
     }
 
@@ -55,19 +58,22 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         this.mimicState = mimicState;
         this.setChanged();
 
-        if (this.level != null) {
-            if (!this.level.isClientSide()) {
-                //服务端操作：通知附近客户端接收新数据
-                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);//更新方块状态+发送给客户端
-            } else {
-                //客户端操作：重新构建ModelData
-                this.requestModelDataUpdate();
-                //触发区块重绘，让BER渲染器画出新模型
-                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 8);
-                //光照更新
-                this.level.getLightEngine().checkBlock(this.worldPosition);
-            }
+        if (this.level == null) {
+            return;
         }
+
+        if (!this.level.isClientSide()) {
+            //服务端操作：通知附近客户端接收新数据
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);//更新方块状态+发送给客户端
+            return;
+        }
+
+        //客户端操作：重新构建ModelData
+        this.requestModelDataUpdate();
+        //触发区块重绘，让BER渲染器画出新模型
+        this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 8);
+        //光照更新
+        this.level.getLightEngine().checkBlock(this.worldPosition);
     }
 
     public boolean isLocked() { return this.isLocked; }

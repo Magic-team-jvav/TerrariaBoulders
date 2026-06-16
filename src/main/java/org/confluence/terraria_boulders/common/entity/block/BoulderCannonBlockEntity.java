@@ -53,7 +53,9 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         return this.cannonAmmo.getFirst();
     }
 
-    /**此方法会自动处理复制ItemStack*/
+    /**
+     * 此方法会自动处理复制ItemStack
+     */
     public void setCannonAmmo(ItemStack cannonAmmo) {
         ItemStack stack = cannonAmmo.copy();
         stack.setCount(1);
@@ -69,18 +71,20 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         float yawDelta = Mth.degreesDifference(be.getCurrentYaw(), be.targetYaw);
         float pitchDelta = be.targetPitch - be.getCurrentPitch(); // Pitch 不需要处理 360 度环绕
 
-        if (Math.abs(yawDelta) > 0.05f || Math.abs(pitchDelta) > 0.05f) {
-            be.setCurrentYaw(wrapAndMove(be.getCurrentYaw(), be.targetYaw, ROTATION_SPEED));
-            be.setCurrentPitch(wrapAndMove(be.getCurrentPitch(), be.targetPitch, ROTATION_SPEED));
-
-            be.soundTicks++;
-            //5tick检查一次
-            if (!level.isClientSide() && be.soundTicks % 5 == 0) {
-                level.playSound(null, pos, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 0.3F, 1.2F + level.getRandom().nextFloat() * 0.2F);//略微随机化音调
-            }
-
-            be.setChanged();
+        if (!(Math.abs(yawDelta) > 0.05f) && !(Math.abs(pitchDelta) > 0.05f)) {
+            return;
         }
+
+        be.setCurrentYaw(wrapAndMove(be.getCurrentYaw(), be.targetYaw, ROTATION_SPEED));
+        be.setCurrentPitch(wrapAndMove(be.getCurrentPitch(), be.targetPitch, ROTATION_SPEED));
+
+        be.soundTicks++;
+        //5tick检查一次
+        if (!level.isClientSide() && be.soundTicks % 5 == 0 && (Math.abs(yawDelta) > 0.1f || Math.abs(pitchDelta) > 0.1f)) {
+            level.playSound(null, pos, SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 0.3F, 1.2F + level.getRandom().nextFloat() * 0.2F);//略微随机化音调
+        }
+
+        be.setChanged();
     }
 
     //辅助方法处理角度的平滑逼近并解决360度跨界问题
@@ -228,15 +232,17 @@ public class BoulderCannonBlockEntity extends BlockEntity implements Container {
         newTargetPitch = Mth.clamp(newTargetPitch, MIN_PITCH, MAX_PITCH);
 
         //只有当玩家视角变化超过1度时，才更新目标并发送数据包
-        if (Math.abs(Mth.degreesDifference(this.targetYaw, newTargetYaw)) > 1.0f || Math.abs(this.targetPitch - newTargetPitch) > 1.0f) {
-            this.targetYaw = newTargetYaw;
-            this.targetPitch = newTargetPitch;
-            this.setChanged();
+        if (!(Math.abs(Mth.degreesDifference(this.targetYaw, newTargetYaw)) > 1.0f) && !(Math.abs(this.targetPitch - newTargetPitch) > 1.0f)) {
+            return;
+        }
 
-            //发包
-            if (this.level != null && !this.level.isClientSide()) {
-                this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
-            }
+        this.targetYaw = newTargetYaw;
+        this.targetPitch = newTargetPitch;
+        this.setChanged();
+
+        //发包
+        if (this.level != null && !this.level.isClientSide()) {
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
     }
 }

@@ -12,11 +12,10 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
-import org.confluence.terraria_boulders.util.IntegerRGB;
 import org.confluence.terraria_boulders.util.VectorUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,32 +140,34 @@ public class RainbowBoulderEntity extends BoulderEntity {
 
     @Override
     protected void onHit(Vec3 deltaMovement) {
-        if (this.noPhysics) {
-            deltaMovement = deltaMovement.add(
-                    Mth.sign(deltaMovement.x) * radius,
-                    Mth.sign(deltaMovement.y) * radius,
-                    Mth.sign(deltaMovement.z) * radius
-            );
-            Vec3 start = position();
-            Vec3 end = start.add(deltaMovement);
-
-            BlockHitResult blockHit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if (blockHit.getType() != HitResult.Type.MISS) {
-                if (level().getRandom().nextFloat() < 0.3f) {
-                    onHitBlock(blockHit);
-                }
-            }
-
-            EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
-                    level(), this, start, end,
-                    getBoundingBox().expandTowards(deltaMovement).inflate(1.0),
-                    this::canHitEntity
-            );
-            if (entityHit != null) {
-                onHitEntity(entityHit);
-            }
-        } else {
+        if (!this.noPhysics) {
             super.onHit(deltaMovement);
+            updateColor();
+            return;
+        }
+
+        deltaMovement = deltaMovement.add(
+                Mth.sign(deltaMovement.x) * radius,
+                Mth.sign(deltaMovement.y) * radius,
+                Mth.sign(deltaMovement.z) * radius
+        );
+        Vec3 start = position();
+        Vec3 end = start.add(deltaMovement);
+
+        BlockHitResult blockHit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (blockHit.getType() != HitResult.Type.MISS) {
+            if (level().getRandom().nextFloat() < 0.3f) {
+                onHitBlock(blockHit);
+            }
+        }
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                level(), this, start, end,
+                getBoundingBox().expandTowards(deltaMovement).inflate(1.0),
+                this::canHitEntity
+        );
+        if (entityHit != null) {
+            onHitEntity(entityHit);
         }
         updateColor();
     }
@@ -214,30 +215,32 @@ public class RainbowBoulderEntity extends BoulderEntity {
     }
 
     private void saveTrailPos() {
-        if (this.level().isClientSide()) {
-            Vec3 currentPos = this.position();
+        if (!this.level().isClientSide()) {
+            return;
+        }
 
-            if (trails.isEmpty()) {
-                trails.addLast(currentPos);
+        Vec3 currentPos = this.position();
+
+        if (trails.isEmpty()) {
+            trails.addLast(currentPos);
+        }
+
+        Vec3 lastPos = trails.getLast();
+        double dist = lastPos.distanceTo(currentPos);
+
+        double spacing = 0.4;
+        if (dist > spacing) {
+            int steps = Mth.floor(dist / spacing);
+            Vec3 delta = currentPos.subtract(lastPos).scale(1.0 / steps);
+            for (int i = 1; i <= steps; i++) {
+                trails.addLast(lastPos.add(delta.scale(i)));
             }
+        } else {
+            trails.addLast(currentPos);
+        }
 
-            Vec3 lastPos = trails.getLast();
-            double dist = lastPos.distanceTo(currentPos);
-
-            double spacing = 0.4;
-            if (dist > spacing) {
-                int steps = Mth.floor(dist / spacing);
-                Vec3 delta = currentPos.subtract(lastPos).scale(1.0 / steps);
-                for (int i = 1; i <= steps; i++) {
-                    trails.addLast(lastPos.add(delta.scale(i)));
-                }
-            } else {
-                trails.addLast(currentPos);
-            }
-
-            while (trails.size() > 20) {
-                trails.removeFirst();
-            }
+        while (trails.size() > 20) {
+            trails.removeFirst();
         }
     }
 
