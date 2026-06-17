@@ -1,5 +1,6 @@
 package org.confluence.terraria_boulders.common.entity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -9,16 +10,50 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
+import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
 
 public class CannonSeatEntity extends Entity {
     public CannonSeatEntity(EntityType<?> type, Level level) {
         super(type, level);
         this.noPhysics = true;
+    }
+
+    //在上面左键时触发开火
+    public void onLeftClick(Player player){
+        BlockPos pos = BlockPos.containing(this.position());
+        Level level = this.level();
+        BlockEntity be = level.getBlockEntity(pos);
+        if(be == null) return;
+        BlockState state = be.getBlockState();
+        if(state.getBlock() instanceof BoulderCannonBlock bcBlock){
+            bcBlock.launch(state, level, pos, true);
+        }
+    }
+
+    //在上面右键时触发装填
+    public void onRightClick(Player player){
+        BlockPos pos = BlockPos.containing(this.position());
+        Level level = this.level();
+        BlockEntity be = level.getBlockEntity(pos);
+        if(be == null) return;
+        BlockState state = be.getBlockState();
+        if(be instanceof BoulderCannonBlockEntity bcbe && state.getBlock() instanceof BoulderCannonBlock bcBlock){
+            //获取手上的物品，右手物品为空则获取左手
+            ItemStack stack = player.getMainHandItem();
+            if(stack.isEmpty()) stack = player.getOffhandItem();
+            //装弹
+            bcBlock.reload(pos, bcbe, level, stack, player);
+        }
+
     }
 
     @Override

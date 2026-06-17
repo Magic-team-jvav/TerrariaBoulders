@@ -103,13 +103,7 @@ public class ModEvent {
             return;
         }
         //手动触发方块逻辑
-        InteractionResult result = state.useItemOn(
-                event.getItemStack(),
-                level,
-                player,
-                event.getHand(),
-                event.getUseOnContext().getHitResult()
-        );
+        InteractionResult result = state.useItemOn(event.getItemStack(), level, player, event.getHand(), event.getUseOnContext().getHitResult());
 
         //useItemOn返回SUCCESS
         if (!result.consumesAction()) {

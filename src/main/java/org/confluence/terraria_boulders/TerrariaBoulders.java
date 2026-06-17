@@ -11,10 +11,14 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
+import org.confluence.terraria_boulders.common.network.MountClickPayload;
+import org.confluence.terraria_boulders.common.network.ServerHandler;
 import org.confluence.terraria_boulders.datagen.ModDatagen;
 import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.confluence.terraria_boulders.init.*;
@@ -40,6 +44,7 @@ public class TerrariaBoulders {
         ModBlockEntityTypes.REGISTER.register(modEventBus);
         ModEntityTypes.REGISTER.register(modEventBus);
         modEventBus.addListener(ModDatagen::gatherData);
+        modEventBus.addListener(this::registerPackets);
     }
 
     @SubscribeEvent
@@ -75,5 +80,13 @@ public class TerrariaBoulders {
 
     public static <P extends IPacket> CustomPacketPayload.Type<P> modType(String id) {
         return new CustomPacketPayload.Type<>(modRl(id));
+    }
+
+    private void registerPackets(final RegisterPayloadHandlersEvent event) {
+        //设置网络命名空间
+        final PayloadRegistrar registrar = event.registrar(ID).versioned("1.0");
+
+        //注册右键事件数据包
+        registrar.playToServer(MountClickPayload.TYPE, MountClickPayload.STREAM_CODEC, ServerHandler::handleData);
     }
 }

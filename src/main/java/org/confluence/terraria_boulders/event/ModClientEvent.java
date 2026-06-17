@@ -1,6 +1,8 @@
 package org.confluence.terraria_boulders.event;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.resources.Identifier;
@@ -9,8 +11,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
 import org.confluence.terraria_boulders.client.model.CamouflagedBoulderModel;
@@ -18,6 +23,8 @@ import org.confluence.terraria_boulders.client.model.MiniBoulderCannonModel;
 import org.confluence.terraria_boulders.client.renderer.block.BoulderCannonRenderer;
 import org.confluence.terraria_boulders.client.renderer.block.CamouflagedBoulderSpecialRenderer;
 import org.confluence.terraria_boulders.client.renderer.entity.CamouflagedBoulderRenderer;
+import org.confluence.terraria_boulders.common.entity.CannonSeatEntity;
+import org.confluence.terraria_boulders.common.network.MountClickPayload;
 import org.confluence.terraria_boulders.init.ModBlockEntityTypes;
 import org.confluence.terraria_boulders.init.ModBlocks;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
@@ -60,6 +67,21 @@ public class ModClientEvent {
             if (original != null) {
                 //包装成动态模型
                 blockModels.put(state, new CamouflagedBoulderModel(original));
+            }
+        }
+    }
+
+    //坐在大炮上时，左键开火，右键装填
+    @SubscribeEvent
+    public static void onKeyInput(InputEvent.InteractionKeyMappingTriggered event) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && player.getVehicle() instanceof CannonSeatEntity) {
+            if (event.isAttack()) {//左键
+                ClientPacketDistributor.sendToServer(new MountClickPayload(true));
+                event.setCanceled(true);//取消左键
+            } else if (event.isUseItem()) {//右键
+                ClientPacketDistributor.sendToServer(new MountClickPayload(false));
+                event.setCanceled(true);//取消右键
             }
         }
     }

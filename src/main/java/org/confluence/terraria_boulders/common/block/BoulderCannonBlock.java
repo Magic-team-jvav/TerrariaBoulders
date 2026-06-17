@@ -124,7 +124,7 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         level.setBlock(pos, state.setValue(POWERED, hasSignal), 3);
     }
 
-    protected void launch(BlockState state, Level level, BlockPos pos, boolean hasSignal) {
+    public void launch(BlockState state, Level level, BlockPos pos, boolean hasSignal) {
         if (!hasSignal) {
             return;
         }
@@ -151,112 +151,6 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
         this.fire(level, pos, itemStack, blockItem, state, boulderBlock);
     }
 
-    @Override
-    public BlockState getStateForPlacement(@NonNull BlockPlaceContext context) {
-        //放下时检测周围信号，并设置初始POWERED
-        return Objects.requireNonNull(super.getStateForPlacement(context)).setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
-    }
-
-//    @Override
-//    @NonNull
-//    public RenderShape getRenderShape(BlockState state) {
-//        //取消json渲染
-//        return RenderShape.MODEL;
-//    }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        //检查当前方块实体的是否为大炮
-        if (type == ModBlockEntityTypes.BOULDER_CANNON.get()) {
-            return (lvl, pos, st, be) -> BoulderCannonBlockEntity.tick(lvl, pos, st, (BoulderCannonBlockEntity) be);
-        }
-        //如果类型对不上不需要
-        return null;
-    }
-
-    @Override
-    @NonNull
-    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (!(level.getBlockEntity(pos) instanceof BoulderCannonBlockEntity be)) {
-            return InteractionResult.PASS;
-        }
-        //调节角度
-        if (stack.isEmpty() && !player.isShiftKeyDown()) {
-
-            //同时在客户端和服务端中改变玩家角度为大炮角度
-            player.setYRot(be.getCurrentYaw());
-            player.setXRot(be.getCurrentPitch());
-            player.setYHeadRot(be.getCurrentYaw());//把头也扭过去
-            player.yRotO = be.getCurrentYaw(); //更新上一帧数据，防止插值导致的1帧残影
-            player.xRotO = be.getCurrentPitch();
-
-            if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
-                return InteractionResult.SUCCESS;
-            }
-            //当前没有别的座位
-            List<CannonSeatEntity> existingSeats = level.getEntitiesOfClass(CannonSeatEntity.class, new net.minecraft.world.phys.AABB(pos));
-
-            if (!existingSeats.isEmpty()) {
-                return InteractionResult.SUCCESS;
-            }
-
-            //生成大炮正中心的座位
-            CannonSeatEntity seat = ModEntityTypes.CANNON_SEAT.get().create(level, EntitySpawnReason.TRIGGERED);
-            if (seat == null) {
-                return InteractionResult.SUCCESS;
-            }
-
-            //seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.2D, pos.getZ() + 0.5D);
-            seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D);
-            serverLevel.addFreshEntity(seat);
-
-            //骑上
-            player.startRiding(seat);
-            serverLevel.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1.0F, 1.3F);
-            return InteractionResult.SUCCESS;
-        }
-//            if(player.isShiftKeyDown()){
-//                //调节模式
-//                be.setAimingMode(player.getUUID());
-//                if(!level.isClientSide() && level instanceof ServerLevel serverLevel){
-//                    serverLevel.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1.0F, 1.5F);
-//                    level.sendBlockUpdated(pos, state, state, 3);
-//                }
-//                return InteractionResult.SUCCESS;
-//            }
-
-        //be.nextPitch(level, pos, state);
-
-        Vec3 center = Vec3.atCenterOf(pos);
-        if (!be.getCannonAmmo().isEmpty()) {
-            if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
-                return InteractionResult.SUCCESS;
-            }
-            //装填状态
-            serverLevel.addFreshEntity(new ItemEntity(level, center.x, center.y + 0.5D, center.z, be.getCannonAmmo()));
-            be.setCannonAmmo(ItemStack.EMPTY);
-            serverLevel.playSound(null, pos, SoundEvents.DECORATED_POT_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
-            //level.playSound(null, pos, SoundEvents.DECORATED_POT_SHATTER, SoundSource.BLOCKS, 1.0F, 0.8F);
-            return InteractionResult.SUCCESS;
-        }
-
-        //未装填状态
-        if (!(stack.getItem() instanceof BlockItem blockItem) || !(blockItem.getBlock() instanceof BoulderBlock boulderBlock)) {
-            return InteractionResult.PASS;
-        }
-
-        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
-            return InteractionResult.SUCCESS;
-        }
-
-        be.setCannonAmmo(stack);
-        if (!player.isCreative()) stack.shrink(1);
-        serverLevel.playSound(null, pos, SoundEvents.DECORATED_POT_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
-        serverLevel.sendParticles(ParticleTypes.CRIT, center.x, center.y + 0.5, center.z, 15, 0.2, 0.2, 0.2, 0.1);
-        serverLevel.sendParticles(ParticleTypes.SMOKE, center.x, center.y, center.z, 10, 0.1, 0.1, 0.1, 0.05);
-        return InteractionResult.SUCCESS;
-    }
 
     /**
      * 具体的发射方法
@@ -303,5 +197,106 @@ public class BoulderCannonBlock extends Block implements EntityBlock {
                 0.2, 0.2, 0.2,//扩散范围
                 0.05//粒子速度
         );
+    }
+
+    @Override
+    public BlockState getStateForPlacement(@NonNull BlockPlaceContext context) {
+        //放下时检测周围信号，并设置初始POWERED
+        return Objects.requireNonNull(super.getStateForPlacement(context)).setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
+    }
+
+//    @Override
+//    @NonNull
+//    public RenderShape getRenderShape(BlockState state) {
+//        //取消json渲染
+//        return RenderShape.MODEL;
+//    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        //检查当前方块实体的是否为大炮
+        if (type == ModBlockEntityTypes.BOULDER_CANNON.get()) {
+            return (lvl, pos, st, be) -> BoulderCannonBlockEntity.tick(lvl, pos, st, (BoulderCannonBlockEntity) be);
+        }
+        //如果类型对不上不需要
+        return null;
+    }
+
+    @Override
+    @NonNull
+    public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (!(level.getBlockEntity(pos) instanceof BoulderCannonBlockEntity be)) {
+            return InteractionResult.PASS;
+        }
+
+        //调节角度
+        if (stack.isEmpty() && !player.isShiftKeyDown()) {
+            //同时在客户端和服务端中改变玩家角度为大炮角度
+            player.setYRot(be.getCurrentYaw());
+            player.setXRot(be.getCurrentPitch());
+            player.setYHeadRot(be.getCurrentYaw());//把头也扭过去
+            player.yRotO = be.getCurrentYaw(); //更新上一帧数据，防止插值导致的1帧残影
+            player.xRotO = be.getCurrentPitch();
+
+            if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
+                return InteractionResult.SUCCESS;
+            }
+            //当前没有别的座位
+            List<CannonSeatEntity> existingSeats = level.getEntitiesOfClass(CannonSeatEntity.class, new net.minecraft.world.phys.AABB(pos));
+
+            if (!existingSeats.isEmpty()) {
+                return InteractionResult.SUCCESS;
+            }
+
+            //生成大炮正中心的座位
+            CannonSeatEntity seat = ModEntityTypes.CANNON_SEAT.get().create(level, EntitySpawnReason.TRIGGERED);
+            if (seat == null) {
+                return InteractionResult.SUCCESS;
+            }
+
+            //seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.2D, pos.getZ() + 0.5D);
+            seat.setPos(pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D);
+            serverLevel.addFreshEntity(seat);
+
+            //骑上
+            player.startRiding(seat);
+            serverLevel.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1.0F, 1.3F);
+            return InteractionResult.SUCCESS;
+        }
+
+        //装弹逻辑
+        return reload(pos, be, level, stack, player);
+    }
+
+    public InteractionResult reload(BlockPos pos, BoulderCannonBlockEntity be, Level level, ItemStack stack, Player player) {
+        Vec3 center = Vec3.atCenterOf(pos);
+        if (!be.getCannonAmmo().isEmpty()) {
+            if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
+                return InteractionResult.SUCCESS;
+            }
+            //装填状态
+            serverLevel.addFreshEntity(new ItemEntity(level, center.x, center.y + 0.5D, center.z, be.getCannonAmmo()));
+            be.setCannonAmmo(ItemStack.EMPTY);
+            serverLevel.playSound(null, pos, SoundEvents.DECORATED_POT_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
+            //level.playSound(null, pos, SoundEvents.DECORATED_POT_SHATTER, SoundSource.BLOCKS, 1.0F, 0.8F);
+            return InteractionResult.SUCCESS;
+        }
+
+        //未装填状态
+        if (!(stack.getItem() instanceof BlockItem blockItem) || !(blockItem.getBlock() instanceof BoulderBlock boulderBlock)) {
+            return InteractionResult.PASS;
+        }
+
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
+            return InteractionResult.SUCCESS;
+        }
+
+        be.setCannonAmmo(stack);
+        if (!player.isCreative()) stack.shrink(1);
+        serverLevel.playSound(null, pos, SoundEvents.DECORATED_POT_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
+        serverLevel.sendParticles(ParticleTypes.CRIT, center.x, center.y + 0.5, center.z, 15, 0.2, 0.2, 0.2, 0.1);
+        serverLevel.sendParticles(ParticleTypes.SMOKE, center.x, center.y, center.z, 10, 0.1, 0.1, 0.1, 0.05);
+        return InteractionResult.SUCCESS;
     }
 }
