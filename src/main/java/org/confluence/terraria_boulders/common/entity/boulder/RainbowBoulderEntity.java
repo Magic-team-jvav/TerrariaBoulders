@@ -139,9 +139,9 @@ public class RainbowBoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void onHit(Vec3 deltaMovement) {
+    protected void hitDetector(Vec3 deltaMovement) {
         if (!this.noPhysics) {
-            super.onHit(deltaMovement);
+            super.hitDetector(deltaMovement);
             updateColor();
             return;
         }
@@ -181,8 +181,8 @@ public class RainbowBoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult blockHitResult) {
-        super.onHitBlock(blockHitResult);
+    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {
+        super.onBoulderHitBlock(blockHitResult);
         Direction direction = blockHitResult.getDirection();
         float x = (level().getRandom().nextBoolean() ? 1 : -1) * (level().getRandom().nextFloat() * 0.5f + 0.5f);
         float z = (level().getRandom().nextBoolean() ? 1 : -1) * (level().getRandom().nextFloat() * 0.5f + 0.5f);

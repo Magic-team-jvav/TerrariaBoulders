@@ -15,7 +15,6 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
 import org.confluence.terraria_boulders.client.model.CamouflagedBoulderModel;
@@ -44,7 +43,6 @@ public class ModClientEvent {
     }
 
     //--------事件--------
-
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         //event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);

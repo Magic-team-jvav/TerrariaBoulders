@@ -64,6 +64,9 @@ public class BoulderEntity extends Projectile {
 
     public int stillTickCount; // 静止刻计时
     Vec3 preMoveVelocity; // 在一刻里面移动前的速度
+    //属性：损坏值
+    protected float durability = 5.0f;//耐久值，默认5
+    protected float damageValue = 0.0f;//损坏度，达到durability后损坏
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -71,6 +74,7 @@ public class BoulderEntity extends Projectile {
 
     public BoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         this(ModEntityTypes.BOULDER.get(), level, pos, blockState);
+
     }
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level, Vec3 pos, BlockState blockState) {
@@ -111,14 +115,12 @@ public class BoulderEntity extends Projectile {
     public void tick() {
         super.tick();
 
-        if (isRemoved()) {
-            return;
-        }
+        if (isRemoved()) return;
 
         //先施加重力，不然空中水平移动时测不到地板
         applyGravity();
 
-        //AABB移动前的速度
+        //记录AABB移动前的速度
         this.preMoveVelocity = getDeltaMovement();
 
         //进行移动（AABB会处理穿墙，并将撞墙方向的速度设为 0）
@@ -126,40 +128,190 @@ public class BoulderEntity extends Projectile {
         moveAndUpdateNeighbors();
         Vec3 newPos = this.position();//移动后的位置
 
-        //方块碰撞检测
-        Vec3 postMoveVelocity = getDeltaMovement();
-        boolean hitX = Math.abs(postMoveVelocity.x) <= Math.abs(preMoveVelocity.x) - 0.000001;
-        boolean hitY = Math.abs(postMoveVelocity.y) <= Math.abs(preMoveVelocity.y) - 0.000001;
-        boolean hitZ = Math.abs(postMoveVelocity.z) <= Math.abs(preMoveVelocity.z) - 0.000001;
+        // 碰撞检测
+        if (this.horizontalCollision || this.verticalCollision) {
+            Direction hitDir = Direction.UP; // 兜底方向
 
-        //分发撞击事件
-        if (hitX) {
-            onHitBlock(new BlockHitResult(newPos,
-                    preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST, this.blockPosition(),
-                    false));
-        }
-        if (hitY) {
-            onHitBlock(new BlockHitResult(newPos,
-                    preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP, this.blockPosition(),
-                    false));
-        }
-        if (hitZ) {
-            onHitBlock(new BlockHitResult(newPos,
-                    preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH, this.blockPosition(),
-                    false));
+            // 根据撞击前的真实速度，推算出到底是撞了哪一面墙/地
+            if (this.verticalCollision) {
+                // Y轴撞击：往下掉撞地就是 UP（地面朝上），往上飞撞天花板就是 DOWN
+                hitDir = this.preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP;
+            } else if (this.horizontalCollision) {
+                // X/Z轴撞击：比较X和Z哪个速度大，判定主要撞击面
+                if (Math.abs(this.preMoveVelocity.x) > Math.abs(this.preMoveVelocity.z)) {
+                    hitDir = this.preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST;
+                } else {
+                    hitDir = this.preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH;
+                }
+            }
+            onBoulderHitBlock(new BlockHitResult(newPos, hitDir, this.blockPosition(), false));
         }
 
-        if (isRemoved()) {
-            return;
-        }
-
-        //计算实体碰撞
-        onHit(newPos.subtract(oldPos));
-
+        //计算碰撞（实体）
+        hitDetector(newPos.subtract(oldPos));
         //摩擦力、旋转
         applyFrictionAndRotation();
         //管理生命周期
         updateLifetime();
+    }
+
+    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {
+        Direction direction = blockHitResult.getDirection();
+
+        // 水平撞墙
+        if (this.horizontalCollision) {
+            horizontalHitBlock(blockHitResult, direction);
+        }
+
+        // 垂直撞地/天花板
+        if (this.verticalCollision) {
+            verticalHitBlock(blockHitResult, direction);
+        }
+    }
+
+    //自己实现onHitBlock，不依靠原版射线检测
+    @Override
+    protected final void onHitBlock(BlockHitResult blockHitResult) {}
+
+    // 水平撞墙
+    protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
+        Vec3 postMoveVelocity = getDeltaMovement();
+        double newMotionX = postMoveVelocity.x;
+        double newMotionZ = postMoveVelocity.z;
+        boolean bounced = false;
+
+        //如果移动后X轴速度变小了，说明卡住了X轴东西向的墙
+        if (Math.abs(postMoveVelocity.x) <= Math.abs(this.preMoveVelocity.x) - 0.0001) {
+            newMotionX = -this.preMoveVelocity.x * bounceFactor;
+            bounced = true;
+        }
+
+        //如果Z轴速度变小了，说明卡住了Z轴南北向的墙
+        //如果是撞到墙角，X 和 Z 会同时成立，实现斜向对角反弹
+        if (Math.abs(postMoveVelocity.z) <= Math.abs(this.preMoveVelocity.z) - 0.0001) {
+            newMotionZ = -this.preMoveVelocity.z * bounceFactor;
+            bounced = true;
+        }
+
+        if (bounced) {
+            setDeltaMovement(newMotionX, postMoveVelocity.y, newMotionZ);
+            this.damageValue += 1.0f;
+            playHitBlockSound(level());
+        }
+    }
+
+    // 垂直落地
+    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
+        Vec3 postMoveVelocity = getDeltaMovement();
+        Level level = level();
+
+        // 撞到地面 (Direction.UP)
+        if (direction == Direction.UP) {
+
+            // 下落速度够大（防止平地滚动的细微高低差触发跳跃）
+            if (this.preMoveVelocity.y < -0.1) {
+                // 结算沉重的 Y 轴反弹
+                double bounceY = -this.preMoveVelocity.y * bounceFactor;
+
+                // 默认继承原本的水平运动
+                double motionX = postMoveVelocity.x;
+                double motionZ = postMoveVelocity.z;
+
+                //如果没有水平速度，则弱追踪玩家
+                if (getHorizontalVectorLength(this.preMoveVelocity) < 0.0001) {
+                    Player nearestPlayer = this.getNearestPlayer();
+
+                    if (nearestPlayer != null) {
+                        // 发现玩家，赋予弱追踪的水平初速度
+                        Vec3 toPlayer = nearestPlayer.position().subtract(this.position());
+                        // 抹除Y轴，只取水平方向并乘上巨石的 speed
+                        Vec3 horizontalToPlayer = new Vec3(toPlayer.x, 0, toPlayer.z).normalize().scale(speed);
+
+                        motionX = horizontalToPlayer.x;
+                        motionZ = horizontalToPlayer.z;
+
+                        // 对着玩家滚过去
+                        this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
+                        this.yRotO = this.getYRot();
+
+                    } //else if (!level.isClientSide()) {
+                        // 没有玩家，随机弹跳
+//                        List<Direction> openDirections = new ArrayList<>();
+//                        for (Direction dir : Direction.Plane.HORIZONTAL) {
+//                            Vec3 pos = position();
+//                            BlockHitResult clip = level.clip(new ClipContext(pos, pos.relative(dir, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+//                            if (clip.getType() == HitResult.Type.MISS) {
+//                                openDirections.add(dir);
+//                            }
+//                        }
+//
+//                        if (!openDirections.isEmpty()) {
+//                            int randomIndex = openDirections.size() == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, openDirections.size() - 1);
+//                            Direction randomDir = openDirections.get(randomIndex);
+//
+//                            Vec3 randomMotion = Vec3.ZERO.relative(randomDir, 1).scale(speed);
+//                            motionX = randomMotion.x;
+//                            motionZ = randomMotion.z;
+//
+//                            this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
+//                            this.yRotO = this.getYRot();
+//                        }
+//                    }
+                }
+
+                // 将水平 AI 速度与 Y 轴物理反弹一起赋予巨石
+                setDeltaMovement(motionX, bounceY, motionZ);
+
+                this.fallDistance = 0;
+                playHitBlockSound(level);
+            }
+        }
+        // 撞到天花板 (Direction.DOWN)
+        else if (direction == Direction.DOWN) {
+            if (this.preMoveVelocity.y > 0) {
+                setDeltaMovement(postMoveVelocity.x, -this.preMoveVelocity.y * bounceFactor, postMoveVelocity.z);
+            }
+        }
+    }
+
+//    // 垂直落地
+//    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
+//        Vec3 postMoveVelocity = getDeltaMovement();
+//
+//        // 撞到地面
+//        if (direction == Direction.UP) {
+//            // 下落速度满足阈值（-0.1可以保证较小的跌落也能弹一下）
+//            if (this.preMoveVelocity.y < -0.1) {
+//                // 计算沉重的反弹力
+//                double bounceY = -this.preMoveVelocity.y * bounceFactor;
+//
+//                // 保留 postMoveVelocity 里的 X 和 Z，这就是它原本追踪玩家的滚动惯性！
+//                setDeltaMovement(postMoveVelocity.x, bounceY, postMoveVelocity.z);
+//
+//                this.fallDistance = 0;
+//                playHitBlockSound(this.level());
+//            }
+//        }
+//        // 撞到天花板
+//        else if (direction == Direction.DOWN) {
+//            if (this.preMoveVelocity.y > 0) {
+//                setDeltaMovement(postMoveVelocity.x, -this.preMoveVelocity.y * bounceFactor, postMoveVelocity.z);
+//            }
+//        }
+//    }
+
+    @Override
+    protected void onHitEntity(EntityHitResult entityHitResult) {
+        Entity entity = entityHitResult.getEntity();
+        UUID uuid1 = entity.getUUID();
+
+        // TODO 需要重写
+        int i = hitHistory.containsKey(uuid1) ? hitHistory.addTo(uuid1, -1) : 0;
+        if (i > 0) {
+            return;
+        }
+        entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
+        hitHistory.put(uuid1, 5);
     }
 
     protected void rotate(Vec3 deltaMovement) {
@@ -173,7 +325,8 @@ public class BoulderEntity extends Projectile {
         this.rotate += r;
     }
 
-    protected void onHit(Vec3 deltaMovement) {
+    //碰撞检测器
+    protected void hitDetector(Vec3 deltaMovement) {
         double actualSpeed = deltaMovement.length();
 
         //移动或滚动才触发伤害
@@ -223,17 +376,17 @@ public class BoulderEntity extends Projectile {
         }
     }
 
-    private void checkBlockCollisionPrediction() {
-        Vec3 start = position();
-        Vec3 intendedMove = getDeltaMovement();
-
-        //扫描方块，下一帧会不会撞墙
-        HitResult blockHit = level().clip(new ClipContext(start, start.add(intendedMove), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-
-        if (blockHit.getType() != HitResult.Type.MISS) {
-            onHitBlock((BlockHitResult) blockHit);
-        }
-    }
+//    private void checkBlockCollisionPrediction() {
+//        Vec3 start = position();
+//        Vec3 intendedMove = getDeltaMovement();
+//
+//        //扫描方块，下一帧会不会撞墙
+//        HitResult blockHit = level().clip(new ClipContext(start, start.add(intendedMove), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+//
+//        if (blockHit.getType() != HitResult.Type.MISS) {
+//            onHitBlock((BlockHitResult) blockHit);
+//        }
+//    }
 
     protected void applyFrictionAndRotation() {
         //衰减速度
@@ -260,22 +413,16 @@ public class BoulderEntity extends Projectile {
         } else {
             stillTickCount = 0;
         }
+
+        //检查是否已损坏
+        if (this.damageValue >= this.durability){
+            this.onRemove();
+        }
     }
 
     @Override
     protected double getDefaultGravity() {
         return 0.08;
-    }
-
-    @Override
-    protected void onHitBlock(BlockHitResult blockHitResult) {
-        super.onHitBlock(blockHitResult);
-        Direction direction = blockHitResult.getDirection();
-        if (direction.getAxis() == Direction.Axis.Y) {
-            verticalHitBlock(blockHitResult, direction);
-        } else {
-            horizontalHitBlock(blockHitResult, direction);
-        }
     }
 
     protected void playHitBlockSound(Level level) {
@@ -285,50 +432,51 @@ public class BoulderEntity extends Projectile {
         serverLevel.playSound(null, blockPosition(), getBlockState().getSoundType().getFallSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
-    protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-        onRemove();
-        playHitBlockSound(level());
-    }
-
-    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-        Level level = level();
-        if (direction != Direction.UP) {
-            return;
-        }
-
-        // 如果水平速度几乎为零则尝试添加水平向量
-        if (!(getHorizontalVectorLength(getDeltaMovement()) < 0.0001)) {
-            verticalHitRebound(blockHitResult, direction);
-            return;
-        }
-
-        // 先尝试获取最近的目标
-        Player nearestPlayer = getNearestPlayer();
-        if (nearestPlayer != null) {
-            targetTo(nearestPlayer);
-            verticalHitRebound(blockHitResult, direction);
-            return;
-        }
-
-
-        List<Direction> directions = new ArrayList<>();
-        for (Direction direction1 : Direction.Plane.HORIZONTAL) {
-            Vec3 position = position();
-            BlockHitResult clip = level.clip(new ClipContext(position, position.relative(direction1, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if (clip.getType() == HitResult.Type.MISS) {
-                directions.add(direction1);
-            }
-        }
-
-        int directionsSize = directions.size();
-        // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
-        if (!directions.isEmpty() && !level.isClientSide()) {
-            Direction direction1 = directions.get(directionsSize == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, directionsSize - 1));
-            setDeltaMovement(getDeltaMovement().relative(direction1, 1).scale(speed));
-        }
-
-        verticalHitRebound(blockHitResult, direction);
-    }
+//    protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
+//        this.damageValue += 1.0f;//增加损坏度
+////        onRemove();
+//        playHitBlockSound(level());
+//    }
+//
+//    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
+//        Level level = level();
+//        if (direction != Direction.UP) {
+//            return;
+//        }
+//
+//        // 如果水平速度几乎为零则尝试添加水平向量
+//        if (!(getHorizontalVectorLength(getDeltaMovement()) < 0.0001)) {
+//            verticalHitRebound(blockHitResult, direction);
+//            return;
+//        }
+//
+//        // 先尝试获取最近的目标
+//        Player nearestPlayer = getNearestPlayer();
+//        if (nearestPlayer != null) {
+//            targetTo(nearestPlayer);
+//            verticalHitRebound(blockHitResult, direction);
+//            return;
+//        }
+//
+//
+//        List<Direction> directions = new ArrayList<>();
+//        for (Direction direction1 : Direction.Plane.HORIZONTAL) {
+//            Vec3 position = position();
+//            BlockHitResult clip = level.clip(new ClipContext(position, position.relative(direction1, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+//            if (clip.getType() == HitResult.Type.MISS) {
+//                directions.add(direction1);
+//            }
+//        }
+//
+//        int directionsSize = directions.size();
+//        // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
+//        if (!directions.isEmpty() && !level.isClientSide()) {
+//            Direction direction1 = directions.get(directionsSize == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, directionsSize - 1));
+//            setDeltaMovement(getDeltaMovement().relative(direction1, 1).scale(speed));
+//        }
+//
+//        verticalHitRebound(blockHitResult, direction);
+//    }
 
     protected void verticalHitRebound(BlockHitResult blockHitResult, Direction direction) {
         Vec3 deltaMovement = getDeltaMovement();
@@ -344,20 +492,6 @@ public class BoulderEntity extends Projectile {
         setDeltaMovement(motion.scale(frictionFactor));
         super.onHitBlock(blockHitResult);
         fallDistance = 0;
-    }
-
-    @Override
-    protected void onHitEntity(EntityHitResult entityHitResult) {
-        Entity entity = entityHitResult.getEntity();
-        UUID uuid1 = entity.getUUID();
-
-        // TODO 需要重写
-        int i = hitHistory.containsKey(uuid1) ? hitHistory.addTo(uuid1, -1) : 0;
-        if (i > 0) {
-            return;
-        }
-        entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
-        hitHistory.put(uuid1, 5);
     }
 
     float getDamage(EntityHitResult entityHitResult) {
@@ -387,6 +521,10 @@ public class BoulderEntity extends Projectile {
         return true;
     }
 
+    @Override
+    public float maxUpStep() {
+        return this.radius * 2.0f / 3.0f;//可以上自己1/3大小的坡
+    }
 
     public BlockState getBlockState() {
         return entityData.get(DATA_BLOCK_STATE);
@@ -404,6 +542,14 @@ public class BoulderEntity extends Projectile {
         }
         this.entityData.set(DATA_BLOCK_STATE, state);
     }
+
+    public float getDurability() {return durability;}
+
+    public void setDurability(float durability) {this.durability = durability;}
+
+    public float getDamageValue() {return damageValue;}
+
+    public void setDamageValue(float damageValue) {this.damageValue = damageValue;}
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
@@ -429,6 +575,8 @@ public class BoulderEntity extends Projectile {
         speed = input.getDoubleOr("Speed", 0.7);
         minRemoveSpeed = input.getDoubleOr("MinRemoveSpeed", 0.007);
         generation = input.getIntOr("Generation", 0);
+        this.damageValue = input.getFloatOr("DamageValue", 0.0F);
+        this.durability = input.getFloatOr("Durability", 5.0F);
     }
 
     @Override
@@ -447,5 +595,7 @@ public class BoulderEntity extends Projectile {
         output.putDouble("Speed", speed);
         output.putDouble("MinRemoveSpeed", minRemoveSpeed);
         output.putInt("Generation", generation);
+        output.putFloat("DamageValue", damageValue);
+        output.putFloat("Durability", durability);
     }
 }

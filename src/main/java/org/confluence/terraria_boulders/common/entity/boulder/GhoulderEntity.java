@@ -65,8 +65,11 @@ public class GhoulderEntity extends BoulderEntity {
     @Override
     protected void rotate(Vec3 deltaMovement) {}
 
+//    @Override
+//    protected void onHitBlock(BlockHitResult blockHitResult) {}
+
     @Override
-    protected void onHitBlock(BlockHitResult blockHitResult) {}
+    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {}
 
     @SuppressWarnings("SuspiciousNameCombination")
     @Override

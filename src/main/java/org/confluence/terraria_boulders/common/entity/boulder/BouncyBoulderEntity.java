@@ -19,12 +19,14 @@ public class BouncyBoulderEntity extends BoulderEntity {
         super(entityType, level);
         speed = 0.7;
         bounceFactor = 0.99999999;
+        damageValue = Float.MAX_VALUE;
     }
 
     public BouncyBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.BOUNCY_BOULDER.get(), level, pos, blockState);
         speed = 0.7;
         bounceFactor = 0.99999999;
+        damageValue = Float.MAX_VALUE;
     }
 
 //    @Override
@@ -39,8 +41,8 @@ public class BouncyBoulderEntity extends BoulderEntity {
 //    }
 
     @Override
-    protected void onHitBlock(BlockHitResult blockHitResult) {
-        super.onHitBlock(blockHitResult);
+    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {
+        super.onBoulderHitBlock(blockHitResult);
 
         Vec3 motion = getDeltaMovement();//当前速度
         Direction.Axis axis = blockHitResult.getDirection().getAxis();
