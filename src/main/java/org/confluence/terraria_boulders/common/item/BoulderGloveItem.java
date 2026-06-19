@@ -79,7 +79,7 @@ public class BoulderGloveItem extends Item {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             UUID uuid = getGrabbedUUID(serverPlayer);
             if (uuid != null) {
-                ServerLevel serverLevel = (ServerLevel) serverPlayer.level();
+                ServerLevel serverLevel = serverPlayer.level();
                 Entity grabbed = serverLevel.getEntity(uuid);
                 if (grabbed instanceof BoulderEntity be) {
                     releaseBoulder(be);
@@ -163,7 +163,7 @@ public class BoulderGloveItem extends Item {
     private static void releaseGrabbed(ServerPlayer player) {
         UUID uuid = GRABBED_MAP.remove(player.getUUID());
         if (uuid != null) {
-            ServerLevel level = (ServerLevel) player.level();
+            ServerLevel level = player.level();
             Entity entity = level.getEntity(uuid);
             if (entity instanceof BoulderEntity be && be.isAlive()) {
                 releaseBoulder(be);

@@ -1,9 +1,5 @@
 package org.confluence.terraria_boulders.client;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.renderer.rendertype.RenderType;
-
 public class ModRenderTypes {
 //    public static final RenderType TRAIL_RENDER_TYPE = RenderType.create(
 //            "trail_render_type",

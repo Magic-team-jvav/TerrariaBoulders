@@ -13,9 +13,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.confluence.terraria_boulders.init.ModSounds;
+import org.jetbrains.annotations.Nullable;
 
 public class GhoulderEntity extends BoulderEntity {
     public GhoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
@@ -63,13 +63,15 @@ public class GhoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void rotate(Vec3 deltaMovement) {}
+    protected void rotate(Vec3 deltaMovement) {
+    }
 
 //    @Override
 //    protected void onHitBlock(BlockHitResult blockHitResult) {}
 
     @Override
-    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {}
+    protected void onBoulderHitBlock(BlockHitResult blockHitResult) {
+    }
 
     @SuppressWarnings("SuspiciousNameCombination")
     @Override

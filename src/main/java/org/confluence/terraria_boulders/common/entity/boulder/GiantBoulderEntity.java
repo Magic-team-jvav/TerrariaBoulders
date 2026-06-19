@@ -1,16 +1,13 @@
 package org.confluence.terraria_boulders.common.entity.boulder;
 
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import org.confluence.terraria_boulders.common.block.boulder.GiantBoulderBlock;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 
 public class GiantBoulderEntity extends BoulderEntity {
@@ -33,11 +30,11 @@ public class GiantBoulderEntity extends BoulderEntity {
         return EntityDimensions.scalable(currentSize, currentSize);
     }
 
-    public int getSize(){
+    public int getSize() {
         return this.Size;
     }
 
-    public void setSize(int size){
+    public void setSize(int size) {
         this.Size = size;
         this.refreshDimensions();//重新计算世界碰撞箱
     }

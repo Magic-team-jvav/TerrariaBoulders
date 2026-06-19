@@ -24,7 +24,8 @@ public final class VectorUtils {
         }
         if (scale > 0.0) {
             LivingEntity living = null;
-            if (a instanceof TraceableEntity traceable && traceable.getOwner() instanceof LivingEntity living1) living = living1;
+            if (a instanceof TraceableEntity traceable && traceable.getOwner() instanceof LivingEntity living1)
+                living = living1;
             else if (a instanceof LivingEntity living1) living = living1;
             if (living != null) {
                 AttributeInstance instance = living.getAttribute(Attributes.ATTACK_KNOCKBACK);

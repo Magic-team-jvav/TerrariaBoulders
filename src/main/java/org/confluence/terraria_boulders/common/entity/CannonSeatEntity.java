@@ -28,28 +28,28 @@ public class CannonSeatEntity extends Entity {
     }
 
     //在上面左键时触发开火
-    public void onLeftClick(Player player){
+    public void onLeftClick(Player player) {
         BlockPos pos = BlockPos.containing(this.position());
         Level level = this.level();
         BlockEntity be = level.getBlockEntity(pos);
-        if(be == null) return;
+        if (be == null) return;
         BlockState state = be.getBlockState();
-        if(state.getBlock() instanceof BoulderCannonBlock bcBlock){
+        if (state.getBlock() instanceof BoulderCannonBlock bcBlock) {
             bcBlock.launch(state, level, pos, true);
         }
     }
 
     //在上面右键时触发装填
-    public void onRightClick(Player player){
+    public void onRightClick(Player player) {
         BlockPos pos = BlockPos.containing(this.position());
         Level level = this.level();
         BlockEntity be = level.getBlockEntity(pos);
-        if(be == null) return;
+        if (be == null) return;
         BlockState state = be.getBlockState();
-        if(be instanceof BoulderCannonBlockEntity bcbe && state.getBlock() instanceof BoulderCannonBlock bcBlock){
+        if (be instanceof BoulderCannonBlockEntity bcbe && state.getBlock() instanceof BoulderCannonBlock bcBlock) {
             //获取手上的物品，右手物品为空则获取左手
             ItemStack stack = player.getMainHandItem();
-            if(stack.isEmpty()) stack = player.getOffhandItem();
+            if (stack.isEmpty()) stack = player.getOffhandItem();
             //装弹
             bcBlock.reload(pos, bcbe, level, stack, player);
         }

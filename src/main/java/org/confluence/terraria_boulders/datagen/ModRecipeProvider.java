@@ -46,7 +46,8 @@ public class ModRecipeProvider extends RecipeProvider {
 
     /**
      * 巨石升级 巨石+物品的无序合成
-     * @param result 合成结果
+     *
+     * @param result     合成结果
      * @param ingredient 升级所需物品
      */
     private void boulderUpgrade(ItemLike result, ItemLike ingredient) {

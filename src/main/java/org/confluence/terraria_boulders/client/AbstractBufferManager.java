@@ -23,8 +23,8 @@ public abstract class AbstractBufferManager {
 
     */
 /**
-     * @param refreshTime 刷新间隔，单位毫秒
-     *//*
+ * @param refreshTime 刷新间隔，单位毫秒
+ *//*
 
     public AbstractBufferManager(int refreshTime) {
 //        vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);

@@ -16,7 +16,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -29,8 +28,6 @@ import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.confluence.terraria_boulders.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -63,7 +60,7 @@ public class BoulderEntity extends Projectile {
     public int generation = 0; // 分裂代数，0为原始巨石
 
     public int stillTickCount; // 静止刻计时
-    Vec3 preMoveVelocity; // 在一刻里面移动前的速度
+    public Vec3 preMoveVelocity; // 在一刻里面移动前的速度
     //属性：损坏值
     protected float durability = 5.0f;//耐久值，默认5
     protected float damageValue = 0.0f;//损坏度，达到durability后损坏
@@ -136,7 +133,7 @@ public class BoulderEntity extends Projectile {
             if (this.verticalCollision) {
                 // Y轴撞击：往下掉撞地就是 UP（地面朝上），往上飞撞天花板就是 DOWN
                 hitDir = this.preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP;
-            } else if (this.horizontalCollision) {
+            } else {
                 // X/Z轴撞击：比较X和Z哪个速度大，判定主要撞击面
                 if (Math.abs(this.preMoveVelocity.x) > Math.abs(this.preMoveVelocity.z)) {
                     hitDir = this.preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST;
@@ -171,7 +168,8 @@ public class BoulderEntity extends Projectile {
 
     //自己实现onHitBlock，不依靠原版射线检测
     @Override
-    protected final void onHitBlock(BlockHitResult blockHitResult) {}
+    protected final void onHitBlock(BlockHitResult blockHitResult) {
+    }
 
     // 水平撞墙
     protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
@@ -235,7 +233,7 @@ public class BoulderEntity extends Projectile {
                         this.yRotO = this.getYRot();
 
                     } //else if (!level.isClientSide()) {
-                        // 没有玩家，随机弹跳
+                    // 没有玩家，随机弹跳
 //                        List<Direction> openDirections = new ArrayList<>();
 //                        for (Direction dir : Direction.Plane.HORIZONTAL) {
 //                            Vec3 pos = position();
@@ -415,7 +413,7 @@ public class BoulderEntity extends Projectile {
         }
 
         //检查是否已损坏
-        if (this.damageValue >= this.durability){
+        if (this.damageValue >= this.durability) {
             this.onRemove();
         }
     }
@@ -434,7 +432,8 @@ public class BoulderEntity extends Projectile {
 
 //    protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
 //        this.damageValue += 1.0f;//增加损坏度
-////        onRemove();
+
+    //        onRemove();
 //        playHitBlockSound(level());
 //    }
 //
@@ -477,7 +476,6 @@ public class BoulderEntity extends Projectile {
 //
 //        verticalHitRebound(blockHitResult, direction);
 //    }
-
     protected void verticalHitRebound(BlockHitResult blockHitResult, Direction direction) {
         Vec3 deltaMovement = getDeltaMovement();
         if (deltaMovement.y > getDefaultGravity()) {
@@ -543,13 +541,21 @@ public class BoulderEntity extends Projectile {
         this.entityData.set(DATA_BLOCK_STATE, state);
     }
 
-    public float getDurability() {return durability;}
+    public float getDurability() {
+        return durability;
+    }
 
-    public void setDurability(float durability) {this.durability = durability;}
+    public void setDurability(float durability) {
+        this.durability = durability;
+    }
 
-    public float getDamageValue() {return damageValue;}
+    public float getDamageValue() {
+        return damageValue;
+    }
 
-    public void setDamageValue(float damageValue) {this.damageValue = damageValue;}
+    public void setDamageValue(float damageValue) {
+        this.damageValue = damageValue;
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {

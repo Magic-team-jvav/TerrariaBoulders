@@ -19,7 +19,9 @@ public interface IPacket extends CustomPacketPayload {
         }
     }
 
-    default void c2s(ServerPlayer player) {}
+    default void c2s(ServerPlayer player) {
+    }
 
-    default void s2c(Player player) {}
+    default void s2c(Player player) {
+    }
 }

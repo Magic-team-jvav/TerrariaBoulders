@@ -47,7 +47,6 @@ public final class ModItems {
             (properties) -> new BoulderGloveItem(properties.stacksTo(1)));
 
 
-
     public static DeferredItem<BlockItem> registerBlockItemFood(String name, Item.Properties properties, Holder<? extends Block> block) {
         return REGISTER.registerItem(name, (properties1) -> new BlockItem(block.value(), properties1), () -> properties);
     }

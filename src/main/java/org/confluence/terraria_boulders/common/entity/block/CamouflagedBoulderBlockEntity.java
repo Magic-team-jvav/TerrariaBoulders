@@ -76,8 +76,13 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         this.level.getLightEngine().checkBlock(this.worldPosition);
     }
 
-    public boolean isLocked() { return this.isLocked; }
-    public void setLocked(boolean locked) { this.isLocked = locked; }
+    public boolean isLocked() {
+        return this.isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        this.isLocked = locked;
+    }
 
 //    @Override
 //    @NonNull

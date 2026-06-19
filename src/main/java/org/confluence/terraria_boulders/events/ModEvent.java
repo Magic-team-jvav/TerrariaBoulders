@@ -56,7 +56,7 @@ public class ModEvent {
     }
 
     @SubscribeEvent
-    public static void livingEntityUseItemEvent$Finish(LivingEntityUseItemEvent.Finish event){
+    public static void livingEntityUseItemEvent$Finish(LivingEntityUseItemEvent.Finish event) {
         ItemStack item = event.getItem();
         if (item.is(Tags.Items.DRINKS_WATER) || item.is(Tags.Items.DRINKS_WATERY)) {
             event.getEntity().removeEffect(ModEffects.CHOKING);

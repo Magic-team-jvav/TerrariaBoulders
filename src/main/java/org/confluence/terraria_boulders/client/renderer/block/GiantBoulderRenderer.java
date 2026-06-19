@@ -70,7 +70,7 @@ public class GiantBoulderRenderer implements BlockEntityRenderer<GiantBoulderBlo
         BlockState state = blockEntity.getBlockState();
 
         //检查
-        if (rel == null || !rel.iterator().hasNext()|| !(state.getBlock() instanceof GiantBoulderBlock boulderBlock)) {
+        if (rel == null || !rel.iterator().hasNext() || !(state.getBlock() instanceof GiantBoulderBlock boulderBlock)) {
             berState.displayBlockModel.clear();
             berState.isCenter = false;
             return;
