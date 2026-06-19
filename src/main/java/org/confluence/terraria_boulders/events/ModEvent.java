@@ -1,4 +1,4 @@
-package org.confluence.terraria_boulders.event;
+package org.confluence.terraria_boulders.events;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;

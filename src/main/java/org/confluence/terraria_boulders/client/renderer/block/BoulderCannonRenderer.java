@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
 import org.confluence.terraria_boulders.common.entity.block.BoulderCannonBlockEntity;
-import org.confluence.terraria_boulders.event.ModClientEvent;
+import org.confluence.terraria_boulders.events.ModClientEvent;
 import org.jspecify.annotations.NonNull;
 
 public class BoulderCannonRenderer implements BlockEntityRenderer<BoulderCannonBlockEntity, BoulderCannonRenderer.BoulderCannonRenderState> {
