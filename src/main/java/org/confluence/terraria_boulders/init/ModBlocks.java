@@ -6,7 +6,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import org.apache.commons.io.input.BoundedReader;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
 import org.confluence.terraria_boulders.common.block.boulder.*;
@@ -45,6 +44,8 @@ public final class ModBlocks {
     public static final DeferredBlock<CamouflagedBoulderBlock> CAMOUFLAGED_BOULDER = register("camouflaged_boulder", CamouflagedBoulderBlock::new);
     //巨型巨石
     public static final DeferredBlock<GiantBoulderBlock> GIANT_BOULDER = register("giant_boulder", GiantBoulderBlock::new);
+    //雪球巨石
+    public static final DeferredBlock<SnowBoulderBlock> SNOW_BOULDER = register("snow_boulder", SnowBoulderBlock::new);
     //巨石大炮
     public static final DeferredBlock<BoulderCannonBlock> BOULDER_CANNON = register("boulder_cannon", BoulderCannonBlock::new);
 

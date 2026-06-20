@@ -6,6 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.SnowyBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -45,7 +46,6 @@ public class ModClientEvent {
     //--------事件--------
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        //event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderBER::new);
         //BlockEntityRenderer
         event.registerBlockEntityRenderer(ModBlockEntityTypes.BOULDER_CANNON.get(), BoulderCannonRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntityTypes.CAMOUFLAGED_BOULDER.get(), org.confluence.terraria_boulders.client.renderer.block.CamouflagedBoulderRenderer::new);

@@ -48,6 +48,7 @@ public class ModEvent {
         event.registerEntityRenderer(ModEntityTypes.SPIDER_BOULDER.get(), BoulderRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.RAINBOW_BOULDER.get(), RainbowBoulderRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CAMOUFLAGED_BOULDER.get(), CamouflagedBoulderRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.SNOWY_BOULDER.get(), BoulderRenderer::new);
     }
 
     @SubscribeEvent

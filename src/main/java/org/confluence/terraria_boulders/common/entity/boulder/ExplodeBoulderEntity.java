@@ -21,8 +21,8 @@ public class ExplodeBoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void onHitEntity(EntityHitResult entityHitResult) {
-        super.onHitEntity(entityHitResult);
+    protected void onBoulderHitEntity(EntityHitResult entityHitResult) {
+        super.onBoulderHitEntity(entityHitResult);
         Entity entity = entityHitResult.getEntity();
         Level level = this.level();
         if (!level.isClientSide()) {

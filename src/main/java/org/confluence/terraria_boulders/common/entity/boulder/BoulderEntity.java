@@ -68,6 +68,7 @@ public class BoulderEntity extends Projectile {
     //属性：损坏值
     protected float durability = 5.0f;//耐久值，默认5
     protected float damageValue = 0.0f;//损坏度，达到durability后损坏
+    protected boolean infiniteDurability = false;//无限损坏度
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -175,9 +176,11 @@ public class BoulderEntity extends Projectile {
         }
     }
 
-    //自己实现onHitBlock，不依靠原版射线检测
+    //因为原版的检测是射线，而巨石跟弹射物不太一样，并且已经自己实现碰撞检测，所以不依靠原版射线检测
     @Override
-    protected final void onHitBlock(BlockHitResult blockHitResult) {}
+    protected final void onHitBlock(BlockHitResult result) {}
+    @Override
+    protected final void onHitEntity(EntityHitResult result) {}
 
     // 水平撞墙
     protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
@@ -240,29 +243,50 @@ public class BoulderEntity extends Projectile {
                         this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
                         this.yRotO = this.getYRot();
 
-                    } //else if (!level.isClientSide()) {
+                    } else if (!level.isClientSide()) {
                         // 没有玩家，随机弹跳
-//                        List<Direction> openDirections = new ArrayList<>();
-//                        for (Direction dir : Direction.Plane.HORIZONTAL) {
-//                            Vec3 pos = position();
-//                            BlockHitResult clip = level.clip(new ClipContext(pos, pos.relative(dir, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-//                            if (clip.getType() == HitResult.Type.MISS) {
-//                                openDirections.add(dir);
-//                            }
-//                        }
-//
-//                        if (!openDirections.isEmpty()) {
-//                            int randomIndex = openDirections.size() == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, openDirections.size() - 1);
-//                            Direction randomDir = openDirections.get(randomIndex);
-//
-//                            Vec3 randomMotion = Vec3.ZERO.relative(randomDir, 1).scale(speed);
-//                            motionX = randomMotion.x;
-//                            motionZ = randomMotion.z;
-//
-//                            this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
-//                            this.yRotO = this.getYRot();
-//                        }
-//                    }
+                        Vec3 pos = this.position();
+                        Vec3 validMotion = null;
+
+                        //射线探路尝试次数，找到最空旷的地方滚
+                        int attempts = 8;
+                        for (int i = 0; i < attempts; i++) {
+                            //在0到360之间生成一个弧度
+                            float randomYaw = this.random.nextFloat() * Mth.TWO_PI;
+
+                            //将弧度转换为水平移动的单位向量
+                            double dirX = -Mth.sin(randomYaw);
+                            double dirZ = Mth.cos(randomYaw);
+
+                            //探测距离须大于等于巨石自身的直径，防止体型较大的巨石穿模算错
+                            double probeDistance = Math.max(1.5, this.radius * 2.5F);
+                            Vec3 targetProbePos = pos.add(dirX * probeDistance, 0, dirZ * probeDistance);
+
+                            //发射一条射线，看看这个角度会不会撞墙
+                            BlockHitResult clip = level.clip(new ClipContext(pos, targetProbePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+
+                            //找到了
+                            if (clip.getType() == HitResult.Type.MISS) {
+                                validMotion = new Vec3(dirX * speed, 0, dirZ * speed);
+                                break;//找到就退出循环
+                            }
+                        }
+
+                        //如果8随机未找到
+                        if (validMotion == null) {
+                            //全随机转动
+                            float fallbackYaw = this.random.nextFloat() * Mth.TWO_PI;
+                            validMotion = new Vec3(-Mth.sin(fallbackYaw) * speed, 0, Mth.cos(fallbackYaw) * speed);
+                        }
+
+                        //应用速度
+                        motionX = validMotion.x;
+                        motionZ = validMotion.z;
+
+                        //更新巨石朝向和渲染旋转角
+                        this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
+                        this.yRotO = this.getYRot();
+                    }
                 }
 
                 // 将水平 AI 速度与 Y 轴物理反弹一起赋予巨石
@@ -278,20 +302,6 @@ public class BoulderEntity extends Projectile {
                 setDeltaMovement(postMoveVelocity.x, -this.preMoveVelocity.y * bounceFactor, postMoveVelocity.z);
             }
         }
-    }
-
-    @Override
-    protected void onHitEntity(EntityHitResult entityHitResult) {
-        Entity entity = entityHitResult.getEntity();
-        UUID uuid1 = entity.getUUID();
-
-        // TODO 需要重写
-        int i = hitHistory.containsKey(uuid1) ? hitHistory.addTo(uuid1, -1) : 0;
-        if (i > 0) {
-            return;
-        }
-        entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
-        hitHistory.put(uuid1, 5);
     }
 
     protected void rotate(Vec3 deltaMovement) {
@@ -327,9 +337,29 @@ public class BoulderEntity extends Projectile {
             Vec3 toEntity = entity.position().subtract(oldPos).normalize();
 
             if (deltaMovement.normalize().dot(toEntity) > 0) {
-                onHitEntity(new EntityHitResult(entity));//造成伤害
+                this.onBoulderHitEntity(new EntityHitResult(entity));//造成伤害
             }
         }
+    }
+
+    protected void onBoulderHitEntity(EntityHitResult entityHitResult) {
+        Entity entity = entityHitResult.getEntity();
+        UUID uuid = entity.getUUID();
+
+        // TODO 需要重写
+        int i = hitHistory.containsKey(uuid) ? hitHistory.addTo(uuid, -1) : 0;
+        if (i > 0) {
+            return;
+        }
+
+        float damage = this.getDamage(entityHitResult);
+        if(damage >= 0.0F){
+            entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
+        } else{
+            //（未来可能出一个治愈巨石？）
+        }
+
+        hitHistory.put(uuid, 5);
     }
 
     protected void moveAndUpdateNeighbors() {
@@ -355,18 +385,6 @@ public class BoulderEntity extends Projectile {
             }
         }
     }
-
-//    private void checkBlockCollisionPrediction() {
-//        Vec3 start = position();
-//        Vec3 intendedMove = getDeltaMovement();
-//
-//        //扫描方块，下一帧会不会撞墙
-//        HitResult blockHit = level().clip(new ClipContext(start, start.add(intendedMove), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-//
-//        if (blockHit.getType() != HitResult.Type.MISS) {
-//            onHitBlock((BlockHitResult) blockHit);
-//        }
-//    }
 
     protected void applyFrictionAndRotation() {
         //衰减速度
@@ -395,7 +413,7 @@ public class BoulderEntity extends Projectile {
         }
 
         //检查是否已损坏
-        if (this.damageValue >= this.durability){
+        if (!this.infiniteDurability && this.damageValue >= this.durability){
             this.onRemove();
         }
     }
@@ -412,69 +430,7 @@ public class BoulderEntity extends Projectile {
         serverLevel.playSound(null, blockPosition(), getBlockState().getSoundType().getFallSound(), SoundSource.BLOCKS, 5.0F, 1.0F);
     }
 
-//    protected void horizontalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-//        this.damageValue += 1.0f;//增加损坏度
-////        onRemove();
-//        playHitBlockSound(level());
-//    }
-//
-//    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-//        Level level = level();
-//        if (direction != Direction.UP) {
-//            return;
-//        }
-//
-//        // 如果水平速度几乎为零则尝试添加水平向量
-//        if (!(getHorizontalVectorLength(getDeltaMovement()) < 0.0001)) {
-//            verticalHitRebound(blockHitResult, direction);
-//            return;
-//        }
-//
-//        // 先尝试获取最近的目标
-//        Player nearestPlayer = getNearestPlayer();
-//        if (nearestPlayer != null) {
-//            targetTo(nearestPlayer);
-//            verticalHitRebound(blockHitResult, direction);
-//            return;
-//        }
-//
-//
-//        List<Direction> directions = new ArrayList<>();
-//        for (Direction direction1 : Direction.Plane.HORIZONTAL) {
-//            Vec3 position = position();
-//            BlockHitResult clip = level.clip(new ClipContext(position, position.relative(direction1, 1), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-//            if (clip.getType() == HitResult.Type.MISS) {
-//                directions.add(direction1);
-//            }
-//        }
-//
-//        int directionsSize = directions.size();
-//        // 这里仅在服务端处理因为客户端的随机有可能于服务器的随机不同导致出现问题
-//        if (!directions.isEmpty() && !level.isClientSide()) {
-//            Direction direction1 = directions.get(directionsSize == 1 ? 0 : getRandom().nextIntBetweenInclusive(0, directionsSize - 1));
-//            setDeltaMovement(getDeltaMovement().relative(direction1, 1).scale(speed));
-//        }
-//
-//        verticalHitRebound(blockHitResult, direction);
-//    }
-
-    protected void verticalHitRebound(BlockHitResult blockHitResult, Direction direction) {
-        Vec3 deltaMovement = getDeltaMovement();
-        if (deltaMovement.y > getDefaultGravity()) {
-            playHitBlockSound(level());
-        }
-        if (!(fallDistance > 5)) {
-            return;
-        }
-
-        Vec3 motion = VectorUtils.relativeScale(deltaMovement, blockHitResult.getDirection().getAxis(), -bounceFactor);
-        if (Math.abs(motion.y) < 0.03) motion = new Vec3(motion.x, 0.0, motion.z);
-        setDeltaMovement(motion.scale(frictionFactor));
-        super.onHitBlock(blockHitResult);
-        fallDistance = 0;
-    }
-
-    float getDamage(EntityHitResult entityHitResult) {
+    public float getDamage(EntityHitResult entityHitResult) {
         return 100.0F * (float) Math.clamp(getDeltaMovement().length() * 3, 0, 1);
     }
 

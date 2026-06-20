@@ -1,7 +1,6 @@
 package org.confluence.terraria_boulders.common.block.boulder;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -187,7 +186,6 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
         //应用大小
         if(entity instanceof GiantBoulderEntity gbEntity){
             gbEntity.setSize(this.Size);
-            System.out.println("Size apply! Size: " + gbEntity.getSize());
         }
         BlockPosData data = this.getBetweenClosed(centerPos);
         Iterable<BlockPos> iterablePos = data.iterablePos;

@@ -19,14 +19,14 @@ public class BouncyBoulderEntity extends BoulderEntity {
         super(entityType, level);
         speed = 0.7;
         bounceFactor = 0.99999999;
-        damageValue = Float.MAX_VALUE;
+        infiniteDurability = true;
     }
 
     public BouncyBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.BOUNCY_BOULDER.get(), level, pos, blockState);
         speed = 0.7;
         bounceFactor = 0.99999999;
-        damageValue = Float.MAX_VALUE;
+        infiniteDurability = true;
     }
 
 //    @Override
@@ -78,10 +78,6 @@ public class BouncyBoulderEntity extends BoulderEntity {
 
     @Override
     protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-    }
-
-    @Override
-    protected void verticalHitRebound(BlockHitResult blockHitResult, Direction direction) {
     }
 
     @Override

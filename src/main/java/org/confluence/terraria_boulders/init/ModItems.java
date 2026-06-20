@@ -3,7 +3,6 @@ package org.confluence.terraria_boulders.init;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -11,20 +10,10 @@ import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
-import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
-import org.confluence.terraria_boulders.common.block.boulder.BoulderBreadBlock;
-import org.confluence.terraria_boulders.common.block.boulder.ContactEffectBoulderBlock;
-import org.confluence.terraria_boulders.common.block.boulder.FullCollisionBoulderBlock;
-import org.confluence.terraria_boulders.common.entity.boulder.*;
 import org.confluence.terraria_boulders.common.item.CamouflagedBoulderItem;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class ModItems {
     public static final DeferredRegister.Items REGISTER = DeferredRegister.createItems(TerrariaBoulders.ID);
@@ -50,6 +39,7 @@ public final class ModItems {
             REGISTER.registerItem("camouflaged_boulder",
                     (properties) -> new CamouflagedBoulderItem(ModBlocks.CAMOUFLAGED_BOULDER.get(), properties.component(ModDataComponents.IS_LOCKED.get(), false)));//伪装巨石
     public static final DeferredItem<BlockItem> GIANT_BOULDER = REGISTER.registerSimpleBlockItem(ModBlocks.GIANT_BOULDER);//巨型巨石
+    public static final DeferredItem<BlockItem> SNOW_BOULDER = REGISTER.registerSimpleBlockItem(ModBlocks.SNOW_BOULDER);//雪球巨石
     public static final DeferredItem<BlockItem> BOULDER_CANNON = REGISTER.registerSimpleBlockItem(ModBlocks.BOULDER_CANNON);//巨石大炮
 
 

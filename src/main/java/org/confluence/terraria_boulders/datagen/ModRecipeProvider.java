@@ -42,6 +42,16 @@ public class ModRecipeProvider extends RecipeProvider {
         boulderUpgrade(ModItems.SPIDER_BOULDER, Items.SPIDER_EYE);
         boulderUpgrade(ModItems.RAINBOW_BOULDER, Items.PRISMARINE_CRYSTALS);
         boulderUpgrade(ModItems.CAMOUFLAGED_BOULDER, Items.HONEYCOMB);
+
+        //特殊 巨型巨石
+        shaped(RecipeCategory.REDSTONE, ModItems.GIANT_BOULDER)
+                .define('S', Items.STONE)
+                .define('I', ModItems.BOULDER)
+                .pattern("SSS")
+                .pattern("SIS")
+                .pattern("SSS")
+                .unlockedBy("has_boulder", this.has(ModItems.GIANT_BOULDER))
+                .save(this.output, recipeKey("giant_boulder"));
     }
 
     /**

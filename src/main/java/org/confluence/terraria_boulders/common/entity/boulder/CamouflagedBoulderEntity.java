@@ -47,12 +47,12 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void onHitEntity(EntityHitResult result) {
+    protected void onBoulderHitEntity(EntityHitResult result) {
         //super.onHitEntity(result);
         //运行行为
         CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
         if(behaviour != null) {
-            behaviour.onHitEntity(this, super::onHitEntity, result);
+            behaviour.onHitEntity(this, super::onBoulderHitEntity, result);
         }
         else{
             super.onHitEntity(result);
@@ -68,6 +68,21 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
         }
         else{
             super.onBoulderHitBlock(result);
+        }
+    }
+
+    @Override
+    public float getDamage(EntityHitResult result){
+        CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
+        if(behaviour != null) {
+            float damage = behaviour.getDamage(result);
+            if(damage == CamouflagedBoulderBehaviour.USE_DEFAULT) {
+                return super.getDamage(result);
+            }
+            return damage;
+        }
+        else{
+            return super.getDamage(result);
         }
     }
 
@@ -149,9 +164,11 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
     }
 
     public interface CamouflagedBoulderBehaviour {
+        float USE_DEFAULT = Float.MAX_VALUE;
         void onTick(CamouflagedBoulderEntity entity, Runnable/*无参方法*/ baseTick);
         void onHitEntity(CamouflagedBoulderEntity entity, Consumer<EntityHitResult>/*单参无返回值方法*/ baseHitEntity, EntityHitResult result);
         void onHitBlock(CamouflagedBoulderEntity entity, Consumer<BlockHitResult> baseHitBlock/*BiConsumer<BlockHitResult, Direction>*//*双参无返回值方法*/, BlockHitResult result);
+        default float getDamage(EntityHitResult entityHitResult) {return USE_DEFAULT;}//默认USE_DEFAULT代表用原方法默认值
     }
 
     public static class CamouflagedBoulderBehaviours {
@@ -183,6 +200,9 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
                     }
                     @Override
                     public void onHitBlock(CamouflagedBoulderEntity entity, Consumer<BlockHitResult> baseHitBlock, BlockHitResult result) {baseHitBlock.accept(result);}
+
+                    @Override
+                    public float getDamage(EntityHitResult entityHitResult) {return 0.0F;}//雪块巨石没伤害
                 },
 
                 //黑曜石

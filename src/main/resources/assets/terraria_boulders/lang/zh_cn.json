@@ -19,6 +19,7 @@
   "block.terraria_boulders.camouflaged_boulder": "伪装%s巨石",
   "block.terraria_boulders.boulder_cannon": "巨石大炮",
   "block.terraria_boulders.giant_boulder": "巨型巨石",
+  "block.terraria_boulders.snow_boulder": "雪球巨石",
   "death.attack.boulder": "%1$s 被巨石均匀地涂抹在地上",
   "entity.terraria_boulders.boulder": "巨石",
   "entity.terraria_boulders.explode_boulder": "爆炸巨石",
@@ -31,5 +32,6 @@
   "entity.terraria_boulders.lava_boulder": "熔岩巨石",
   "entity.terraria_boulders.oak_log_boulder": "橡木原木巨石",
   "entity.terraria_boulders.camouflaged_boulder": "伪装%s巨石",
-  "entity.terraria_boulders.giant_boulder": "巨型巨石"
+  "entity.terraria_boulders.giant_boulder": "巨型巨石",
+  "entity.terraria_boulders.snow_boulder": "雪球巨石"
 }

@@ -173,9 +173,9 @@ public class RainbowBoulderEntity extends BoulderEntity {
     }
 
     @Override
-    protected void onHitEntity(EntityHitResult entityHitResult) {
+    protected void onBoulderHitEntity(EntityHitResult entityHitResult) {
         if (!(entityHitResult.getEntity() instanceof Player)) {
-            super.onHitEntity(entityHitResult);
+            super.onBoulderHitEntity(entityHitResult);
         }
         target = null;
     }
