@@ -187,6 +187,7 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
         //应用大小
         if(entity instanceof GiantBoulderEntity gbEntity){
             gbEntity.setSize(this.Size);
+            System.out.println("Size apply! Size: " + gbEntity.getSize());
         }
         BlockPosData data = this.getBetweenClosed(centerPos);
         Iterable<BlockPos> iterablePos = data.iterablePos;

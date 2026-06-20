@@ -67,9 +67,11 @@ public abstract class AbstractBoulderRenderer<E extends BoulderEntity, S extends
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(state.yRot - 90.0F));
         float radius = state.radius;
-        poseStack.translate(0, state.boxHeight / 2, 0);
+        poseStack.translate(0, state.boxHeight / 2.0f, 0);
         poseStack.mulPose(Axis.ZP.rotation(-Mth.rotLerp(state.partialTick, state.rotateO, state.rotate)));
-        poseStack.translate(-radius, -radius, -radius);
+        float scale = radius * 2.0F;//真实放大倍数为radius * 2
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(-0.5f, -0.5f, -0.5f);
         displayBlockModel.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
         poseStack.popPose();
     }

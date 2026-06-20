@@ -28,6 +28,7 @@ import org.confluence.terraria_boulders.init.ModBlocks;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.confluence.terraria_boulders.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,21 +131,8 @@ public class BoulderEntity extends Projectile {
 
         // 碰撞检测
         if (this.horizontalCollision || this.verticalCollision) {
-            Direction hitDir = Direction.UP; // 兜底方向
-
-            // 根据撞击前的真实速度，推算出到底是撞了哪一面墙/地
-            if (this.verticalCollision) {
-                // Y轴撞击：往下掉撞地就是 UP（地面朝上），往上飞撞天花板就是 DOWN
-                hitDir = this.preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP;
-            } else if (this.horizontalCollision) {
-                // X/Z轴撞击：比较X和Z哪个速度大，判定主要撞击面
-                if (Math.abs(this.preMoveVelocity.x) > Math.abs(this.preMoveVelocity.z)) {
-                    hitDir = this.preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST;
-                } else {
-                    hitDir = this.preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH;
-                }
-            }
-            onBoulderHitBlock(new BlockHitResult(newPos, hitDir, this.blockPosition(), false));
+            Direction hitDir = this.getHitDirection();
+            this.onBoulderHitBlock(new BlockHitResult(newPos, hitDir, this.blockPosition(), false));
         }
 
         //计算碰撞（实体）
@@ -153,6 +141,24 @@ public class BoulderEntity extends Projectile {
         applyFrictionAndRotation();
         //管理生命周期
         updateLifetime();
+    }
+
+    private @NonNull Direction getHitDirection() {
+        Direction hitDir = Direction.UP; // 兜底方向
+
+        // 根据撞击前的真实速度，推算出到底是撞了哪一面墙/地
+        if (this.verticalCollision) {
+            // Y轴撞击：往下掉撞地就是 UP（地面朝上），往上飞撞天花板就是 DOWN
+            hitDir = this.preMoveVelocity.y > 0 ? Direction.DOWN : Direction.UP;
+        } else if (this.horizontalCollision) {
+            // X/Z轴撞击：比较X和Z哪个速度大，判定主要撞击面
+            if (Math.abs(this.preMoveVelocity.x) > Math.abs(this.preMoveVelocity.z)) {
+                hitDir = this.preMoveVelocity.x > 0 ? Direction.WEST : Direction.EAST;
+            } else {
+                hitDir = this.preMoveVelocity.z > 0 ? Direction.NORTH : Direction.SOUTH;
+            }
+        }
+        return hitDir;
     }
 
     protected void onBoulderHitBlock(BlockHitResult blockHitResult) {
@@ -273,32 +279,6 @@ public class BoulderEntity extends Projectile {
             }
         }
     }
-
-//    // 垂直落地
-//    protected void verticalHitBlock(BlockHitResult blockHitResult, Direction direction) {
-//        Vec3 postMoveVelocity = getDeltaMovement();
-//
-//        // 撞到地面
-//        if (direction == Direction.UP) {
-//            // 下落速度满足阈值（-0.1可以保证较小的跌落也能弹一下）
-//            if (this.preMoveVelocity.y < -0.1) {
-//                // 计算沉重的反弹力
-//                double bounceY = -this.preMoveVelocity.y * bounceFactor;
-//
-//                // 保留 postMoveVelocity 里的 X 和 Z，这就是它原本追踪玩家的滚动惯性！
-//                setDeltaMovement(postMoveVelocity.x, bounceY, postMoveVelocity.z);
-//
-//                this.fallDistance = 0;
-//                playHitBlockSound(this.level());
-//            }
-//        }
-//        // 撞到天花板
-//        else if (direction == Direction.DOWN) {
-//            if (this.preMoveVelocity.y > 0) {
-//                setDeltaMovement(postMoveVelocity.x, -this.preMoveVelocity.y * bounceFactor, postMoveVelocity.z);
-//            }
-//        }
-//    }
 
     @Override
     protected void onHitEntity(EntityHitResult entityHitResult) {

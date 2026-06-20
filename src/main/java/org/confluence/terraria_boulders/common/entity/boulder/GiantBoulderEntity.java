@@ -19,18 +19,20 @@ public class GiantBoulderEntity extends BoulderEntity {
     //给EntityType.Builder使用的构造函数
     public GiantBoulderEntity(EntityType<? extends GiantBoulderEntity> type, Level level) {
         super(type, level);
+        this.refreshDimensions();//刷新碰撞箱
     }
 
     //给BoulderFactory使用的构造函数
     public GiantBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.GIANT_BOULDER.get(), level, pos, blockState);
+        this.refreshDimensions();//刷新碰撞箱
     }
 
     @Override
     public EntityDimensions getDimensions(Pose pose) {
         //相当于动态计算.sized()
-        float currentSize = (float) this.getSize();
-        return EntityDimensions.scalable(currentSize, currentSize);
+        float size = (float) this.Size;
+        return EntityDimensions.scalable(size, size);
     }
 
     public int getSize(){
