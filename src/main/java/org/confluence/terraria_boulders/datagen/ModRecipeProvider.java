@@ -42,6 +42,7 @@ public class ModRecipeProvider extends RecipeProvider {
         boulderUpgrade(ModItems.SPIDER_BOULDER, Items.SPIDER_EYE);
         boulderUpgrade(ModItems.RAINBOW_BOULDER, Items.PRISMARINE_CRYSTALS);
         boulderUpgrade(ModItems.CAMOUFLAGED_BOULDER, Items.HONEYCOMB);
+        boulderUpgrade(ModItems.SNOW_BOULDER, Items.SNOW_BLOCK);//巨石+雪块
 
         //特殊 巨型巨石
         shaped(RecipeCategory.REDSTONE, ModItems.GIANT_BOULDER)
@@ -52,6 +53,16 @@ public class ModRecipeProvider extends RecipeProvider {
                 .pattern("SSS")
                 .unlockedBy("has_boulder", this.has(ModItems.GIANT_BOULDER))
                 .save(this.output, recipeKey("giant_boulder"));
+
+        //雪球巨石
+        shaped(RecipeCategory.REDSTONE, ModItems.SNOW_BOULDER)
+                .define('S', Items.SNOWBALL)
+                .define('I', ModItems.BOULDER)
+                .pattern(" S ")
+                .pattern("SIS")
+                .pattern(" S ")
+                .unlockedBy("has_snowball", this.has(Items.SNOWBALL))
+                .save(this.output, recipeKey("snow_boulder_from_snowball"));
     }
 
     /**

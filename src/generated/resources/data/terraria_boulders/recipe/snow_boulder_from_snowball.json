@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": "terraria_boulders:boulder",
+    "S": "minecraft:snowball"
+  },
+  "pattern": [
+    " S ",
+    "SIS",
+    " S "
+  ],
+  "result": {
+    "id": "terraria_boulders:snow_boulder"
+  }
+}

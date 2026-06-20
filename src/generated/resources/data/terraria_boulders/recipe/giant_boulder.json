@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": "terraria_boulders:boulder",
+    "S": "minecraft:stone"
+  },
+  "pattern": [
+    "SSS",
+    "SIS",
+    "SSS"
+  ],
+  "result": {
+    "id": "terraria_boulders:giant_boulder"
+  }
+}

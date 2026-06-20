@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "terraria_boulders:boulder",
+    "minecraft:snow_block"
+  ],
+  "result": {
+    "id": "terraria_boulders:snow_boulder"
+  }
+}
