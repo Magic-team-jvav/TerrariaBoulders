@@ -32,7 +32,7 @@ public abstract class ItemInHandLayerMixin<S extends ArmedEntityRenderState, M e
     protected abstract boolean useBabyOffset(S state);
 
     @Unique
-    private BoulderGloveItemModel model;
+    private BoulderGloveItemModel terraria_boulders$boulderGloveModel;
 
     public ItemInHandLayerMixin(RenderLayerParent<S, M> renderer) {
         super(renderer);
@@ -42,12 +42,12 @@ public abstract class ItemInHandLayerMixin<S extends ArmedEntityRenderState, M e
     private void terraria_boulders$init(RenderLayerParent<?, ?> renderer, CallbackInfo ci) {
         if (renderer instanceof LivingEntityRenderer<?, ?, ?> renderer1) {
             EntityRendererProvider.Context terrariaBoulders$context = IEntityRenderer.of(renderer1).getTerraria_boulders$context();
-            this.model = new BoulderGloveItemModel(terrariaBoulders$context.bakeLayer(ModClientEvent.BOULDER_GLOVE_LAYER));
+            this.terraria_boulders$boulderGloveModel = new BoulderGloveItemModel(terrariaBoulders$context.bakeLayer(ModClientEvent.BOULDER_GLOVE_LAYER));
         }
     }
 
     @WrapMethod(method = "submitArmWithItem")
-    private void terraria_boulders$submitArmWithItem1(
+    private void terraria_boulders$submitArmWithItem(
             S state,
             ItemStackRenderState item,
             ItemStack itemStack,
@@ -59,15 +59,15 @@ public abstract class ItemInHandLayerMixin<S extends ArmedEntityRenderState, M e
     ) {
         if (state.getMainHandItemStack().getItem() == ModItems.BOULDER_GLOVE.asItem()) {
             poseStack.pushPose();
-            model.resetPose();
+            terraria_boulders$boulderGloveModel.resetPose();
             boolean isLeftHand = arm == HumanoidArm.LEFT;
-            model.displayToHand(isLeftHand);
+            terraria_boulders$boulderGloveModel.displayToHand(isLeftHand);
             getParentModel().translateToHand(state, arm, poseStack);
-            float offsetX = useBabyOffset(state) ? 0.0F : 1.0F;
-            float offsetY = useBabyOffset(state) ? 1.0F : 2.0F;
-            float offsetZ = useBabyOffset(state) ? -4.5F : -10.0F;
-            poseStack.translate((isLeftHand ? -1 : 1) * offsetX / 16.0F, offsetY / 16.0F, offsetZ / 16.0F);
-            model.submit(poseStack, submitNodeCollector, lightCoords);
+            float offsetX = useBabyOffset(state) ? -2.0F : -1.0F;
+            float offsetY = useBabyOffset(state) ? -13.0F : -14.0F;
+            int i = isLeftHand ? -1 : 1;
+            poseStack.translate(i * offsetX / 16.0F, offsetY / 16.0F, 0 / 16.0F);
+            terraria_boulders$boulderGloveModel.submit(poseStack, submitNodeCollector, lightCoords);
             poseStack.popPose();
             return;
         }
