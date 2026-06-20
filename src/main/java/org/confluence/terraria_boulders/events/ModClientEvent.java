@@ -1,4 +1,4 @@
-package org.confluence.terraria_boulders.event;
+package org.confluence.terraria_boulders.events;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -18,6 +18,7 @@ import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.confluence.terraria_boulders.TerrariaBoulders;
 import org.confluence.terraria_boulders.client.model.BoulderCannonModel;
+import org.confluence.terraria_boulders.client.model.BoulderGloveItemModel;
 import org.confluence.terraria_boulders.client.model.CamouflagedBoulderModel;
 import org.confluence.terraria_boulders.client.model.MiniBoulderCannonModel;
 import org.confluence.terraria_boulders.client.renderer.block.BoulderCannonRenderer;
@@ -87,11 +88,13 @@ public class ModClientEvent {
     //全局标识符
     public static final ModelLayerLocation MINI_CANNON_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "mini_boulder_cannon"), "main");
     public static final ModelLayerLocation CANNON_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "boulder_cannon"), "main");
+    public static final ModelLayerLocation BOULDER_GLOVE_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(TerrariaBoulders.ID, "boulder_glove"), "main");
 
     //注册层结构
     @SubscribeEvent
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MINI_CANNON_LAYER, MiniBoulderCannonModel::createBodyLayer);
         event.registerLayerDefinition(CANNON_LAYER, BoulderCannonModel::createBodyLayer);
+        event.registerLayerDefinition(BOULDER_GLOVE_LAYER, BoulderGloveItemModel::createBodyLayer);
     }
 }

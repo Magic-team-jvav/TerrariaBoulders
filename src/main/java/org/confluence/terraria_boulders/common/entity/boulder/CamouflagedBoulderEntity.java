@@ -1,29 +1,27 @@
 package org.confluence.terraria_boulders.common.entity.boulder;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SnowyBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.confluence.terraria_boulders.init.CamouflagedBoulderBehaviours;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CamouflagedBoulderEntity extends BoulderEntity {
+    private @Nullable CamouflagedBehaviour behaviour;
+
+    static {
+        CamouflagedBoulderBehaviours.init();
+    }
 
     public CamouflagedBoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -35,60 +33,39 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
 
     @Override
     public void tick() {
-        //super.tick();//让行为决定调用
+        //让行为决定调不调用
         //运行行为
-        CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
-        if(behaviour != null) {
+        if (behaviour != null) {
             behaviour.onTick(this, super::tick);
-        }
-        else{//没有特殊行为就正常调用
+        } else {//没有特殊行为就正常调用
             super.tick();
         }
     }
 
     @Override
     protected void onBoulderHitEntity(EntityHitResult result) {
-        //super.onHitEntity(result);
         //运行行为
-        CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
-        if(behaviour != null) {
+        if (behaviour != null) {
             behaviour.onHitEntity(this, super::onBoulderHitEntity, result);
-        }
-        else{
-            super.onHitEntity(result);
+        } else {
+            super.onBoulderHitEntity(result);
         }
     }
 
     @Override
     protected void onBoulderHitBlock(BlockHitResult result) {
         //运行行为
-        CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
-        if(behaviour != null) {
+        if (behaviour != null) {
             behaviour.onHitBlock(this, super::onBoulderHitBlock, result);
-        }
-        else{
+        } else {
             super.onBoulderHitBlock(result);
         }
     }
 
-    @Override
-    public float getDamage(EntityHitResult result){
-        CamouflagedBoulderBehaviour behaviour = this.getBehaviour();
-        if(behaviour != null) {
-            float damage = behaviour.getDamage(result);
-            if(damage == CamouflagedBoulderBehaviour.USE_DEFAULT) {
-                return super.getDamage(result);
-            }
-            return damage;
-        }
-        else{
-            return super.getDamage(result);
-        }
-    }
-
     //查表获取行为
-    public CamouflagedBoulderBehaviour getBehaviour() {
-        return CamouflagedBoulderBehaviours.BEHAVIOURS.get(this.getBlockState().getBlock());
+    @Nullable
+    public CamouflagedBehaviour getBehaviour() {
+        return CamouflagedBoulderBehaviours.get(this.getBlockState().getBlock());
     }
 
     //将方块的原生摩擦力系数转化为衰减系数
@@ -117,6 +94,20 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
 
         AABB bounds = shape.bounds();
         return new Vec2((float) Math.max(bounds.getXsize(), bounds.getZsize()), (float) bounds.getYsize());
+    }
+
+    @Override
+    public float getDamage(EntityHitResult result){
+        if(this.behaviour != null) {
+            float damage = this.behaviour.getDamage(result);
+            if(damage == CamouflagedBehaviour.USE_DEFAULT) {
+                return super.getDamage(result);
+            }
+            return damage;
+        }
+        else{
+            return super.getDamage(result);
+        }
     }
 
     //设置伪装时同步更新碰撞箱
@@ -161,112 +152,18 @@ public class CamouflagedBoulderEntity extends BoulderEntity {
         Vec2 size = getBlockSize(state);
         this.radius = size != null ? Math.max(size.x, size.y) / 2.0F : 0.5f;
         refreshDimensions();
+        this.behaviour = this.getBehaviour();
     }
 
-    public interface CamouflagedBoulderBehaviour {
+    public interface CamouflagedBehaviour {
         float USE_DEFAULT = Float.MAX_VALUE;
-        void onTick(CamouflagedBoulderEntity entity, Runnable/*无参方法*/ baseTick);
-        void onHitEntity(CamouflagedBoulderEntity entity, Consumer<EntityHitResult>/*单参无返回值方法*/ baseHitEntity, EntityHitResult result);
-        void onHitBlock(CamouflagedBoulderEntity entity, Consumer<BlockHitResult> baseHitBlock/*BiConsumer<BlockHitResult, Direction>*//*双参无返回值方法*/, BlockHitResult result);
-        default float getDamage(EntityHitResult entityHitResult) {return USE_DEFAULT;}//默认USE_DEFAULT代表用原方法默认值
-    }
 
-    public static class CamouflagedBoulderBehaviours {
+        default void onTick(CamouflagedBoulderEntity entity, Runnable/*无参方法*/ baseTick) {baseTick.run();}
 
-        //绑定方块行为
-        private static final Map<Block, CamouflagedBoulderBehaviour> BEHAVIOURS = Map.of(
+        default void onHitEntity(CamouflagedBoulderEntity entity, Consumer<EntityHitResult>/*单参无返回值方法*/ baseOnHitEntity, EntityHitResult result) {baseOnHitEntity.accept(result);}
 
-                //雪块
-                Blocks.SNOW_BLOCK, new CamouflagedBoulderBehaviour() {
-                    //滚过的路上生成顶层雪
-                    @Override
-                    public void onTick(CamouflagedBoulderEntity entity, Runnable baseTick) {
-                        baseTick.run();
-                        BlockPos pos = entity.blockPosition();//巨石当前位置
-                        Level level = entity.level();
-                        if(level.isClientSide()) return;
-                        if (level.isEmptyBlock(pos) && level.getBlockState(pos.below()).isSolid()) {
-                            level.setBlockAndUpdate(pos, Blocks.SNOW.defaultBlockState());
-                        }
-                    }
-                    //冻结生物
-                    @Override
-                    public void onHitEntity(CamouflagedBoulderEntity entity, Consumer<EntityHitResult> baseHitEntity, EntityHitResult result) {
-                        baseHitEntity.accept(result);//父类方法
-                        if(entity.level().isClientSide()) return;
-                        if (result.getEntity() instanceof LivingEntity living) {
-                            living.setTicksFrozen(living.getTicksFrozen() + 100);
-                        }
-                    }
-                    @Override
-                    public void onHitBlock(CamouflagedBoulderEntity entity, Consumer<BlockHitResult> baseHitBlock, BlockHitResult result) {baseHitBlock.accept(result);}
+        default void onHitBlock(CamouflagedBoulderEntity entity, Consumer<BlockHitResult> baseOnHitBlock/*BiConsumer<BlockHitResult, Direction>*//*双参无返回值方法*/, BlockHitResult result) {baseOnHitBlock.accept(result);}
 
-                    @Override
-                    public float getDamage(EntityHitResult entityHitResult) {return 0.0F;}//雪块巨石没伤害
-                },
-
-                //黑曜石
-                Blocks.OBSIDIAN, new CamouflagedBoulderBehaviour() {
-                    @Override
-                    public void onTick(CamouflagedBoulderEntity entity, Runnable baseTick) {baseTick.run();}
-                    @Override
-                    public void onHitEntity(CamouflagedBoulderEntity entity, Consumer<EntityHitResult> baseHitEntity, EntityHitResult result) {baseHitEntity.accept(result);}
-                    @Override
-                    public void onHitBlock(CamouflagedBoulderEntity e, Consumer<BlockHitResult> baseHitBlock, BlockHitResult r) {
-                        Level level = e.level();
-                        Direction direction = r.getDirection();
-
-                        // 正面撞墙
-                        if (direction.getAxis() != Direction.Axis.Y) {
-                            boolean destroyedAny = false;
-
-                            //矢量扫荡，顺着巨石上一帧的速度（preMoveVelocity）向前拉伸碰撞箱，这样较薄的方块也可以
-                            Vec3 intendedMove = e.preMoveVelocity != null ? e.preMoveVelocity : Vec3.ZERO;
-                            AABB scanBox = e.getBoundingBox().expandTowards(intendedMove).inflate(0.05);//加一点容差
-
-                            BlockPos minPos = BlockPos.containing(scanBox.minX, scanBox.minY, scanBox.minZ);
-                            BlockPos maxPos = BlockPos.containing(scanBox.maxX, scanBox.maxY, scanBox.maxZ);
-
-                            // 遍历接触到的所有方块
-                            for (BlockPos targetPos : BlockPos.betweenClosed(minPos, maxPos)) {
-                                BlockState state = level.getBlockState(targetPos);
-
-                                if (!state.isAir()) {
-                                    float hardness = state.getDestroySpeed(level, targetPos);
-
-                                    // 撞到的方块硬度小于5，干碎
-                                    if (hardness >= 0.0F && hardness < 5.0F) {
-                                        //第二个参数，客户端不掉落物品
-                                        level.destroyBlock(targetPos, !level.isClientSide(), e);
-                                        destroyedAny = true;
-                                    }
-                                }
-                            }
-
-                            // 只要撞碎一块
-                            if (destroyedAny) {
-                                // 在服务端处理数据
-                                if (!level.isClientSide()) {
-                                    e.setDamageValue(e.getDamageValue() + 1.0f); // 增加损坏值
-                                }
-
-                                //双端同时纠正速度
-                                if (e.preMoveVelocity != null) {
-                                    e.setDeltaMovement(e.preMoveVelocity);
-                                }
-
-                                return;//不触发撞墙反弹
-                            }
-                        }
-
-                        if (!level.isClientSide()) {
-                            e.setDurability(10.0f); // 设置固定耐久值
-                        }
-
-                        // 如果全是硬墙拆不动，或者正在落地，执行父类的反弹物理
-                        baseHitBlock.accept(r);
-                    }
-                }
-        );
+        default float getDamage(EntityHitResult result) {return USE_DEFAULT;}//默认USE_DEFAULT代表用原方法默认值
     }
 }

@@ -2,13 +2,12 @@ package org.confluence.terraria_boulders;
 
 import net.minecraft.core.Registry;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -16,16 +15,14 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.confluence.terraria_boulders.common.block.BoulderCannonBlock;
+import org.confluence.terraria_boulders.common.network.IPacket;
 import org.confluence.terraria_boulders.common.network.MountClickPayload;
 import org.confluence.terraria_boulders.common.network.ServerHandler;
+import org.confluence.terraria_boulders.configs.ModConfigs;
 import org.confluence.terraria_boulders.datagen.ModDatagen;
-import org.confluence.terraria_boulders.event.ModClientEvent;
 import org.confluence.terraria_boulders.init.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.confluence.terraria_boulders.common.network.IPacket;
-import org.confluence.terraria_boulders.configs.ModConfigs;
 
 @Mod(TerrariaBoulders.ID)
 public class TerrariaBoulders {

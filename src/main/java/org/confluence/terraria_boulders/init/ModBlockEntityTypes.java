@@ -18,7 +18,7 @@ public final class ModBlockEntityTypes {
 
     //巨型巨石
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GiantBoulderBlockEntity>> GIANT_BOULDER =
-            REGISTER.register("giant_boulder", () -> new BlockEntityType<>(GiantBoulderBlockEntity::new,  ModBlocks.GIANT_BOULDER.get()));
+            REGISTER.register("giant_boulder", () -> new BlockEntityType<>(GiantBoulderBlockEntity::new, ModBlocks.GIANT_BOULDER.get()));
 
     //巨石大炮
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoulderCannonBlockEntity>> BOULDER_CANNON =

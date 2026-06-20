@@ -64,7 +64,7 @@ public class BoulderEntity extends Projectile {
     public int generation = 0; // 分裂代数，0为原始巨石
 
     public int stillTickCount; // 静止刻计时
-    Vec3 preMoveVelocity; // 在一刻里面移动前的速度
+    public Vec3 preMoveVelocity; // 在一刻里面移动前的速度
     //属性：损坏值
     protected float durability = 5.0f;//耐久值，默认5
     protected float damageValue = 0.0f;//损坏度，达到durability后损坏

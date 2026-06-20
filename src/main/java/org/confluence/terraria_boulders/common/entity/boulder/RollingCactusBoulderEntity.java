@@ -58,7 +58,8 @@ public class RollingCactusBoulderEntity extends BoulderEntity {
         }
 
         @Override
-        protected void defineSynchedData(SynchedEntityData.Builder builder) {}
+        protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        }
 
         @Override
         public void tick() {

@@ -41,11 +41,11 @@
 //        GlStateManager._disableDepthTest();
 //        GlStateManager._viewport(0, 0, Minecraft.getInstance().getMainRenderTarget().width, Minecraft.getInstance().getMainRenderTarget().height);
 //
-////        ShaderInstance shader = ModRenderTypes.Shaders.colorBlitShader;
-////        ShaderInstance shaderinstance = Objects.requireNonNull(shader, "Blit shader not loaded");
-////        shader.COLOR_MODULATOR.set(1f, 1f, 1f, 0.2f);
-////        shaderinstance.setSampler("Sampler0", Minecraft.getInstance().getMainRenderTarget());
-////        shaderinstance.setSampler("Sampler1", BrainOfCthulhuRenderer.target);
+/// /        ShaderInstance shader = ModRenderTypes.Shaders.colorBlitShader;
+/// /        ShaderInstance shaderinstance = Objects.requireNonNull(shader, "Blit shader not loaded");
+/// /        shader.COLOR_MODULATOR.set(1f, 1f, 1f, 0.2f);
+/// /        shaderinstance.setSampler("Sampler0", Minecraft.getInstance().getMainRenderTarget());
+/// /        shaderinstance.setSampler("Sampler1", BrainOfCthulhuRenderer.target);
 //
 //        setupShader.accept(shader);
 //

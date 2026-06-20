@@ -58,7 +58,7 @@ public class BoulderBlock extends Block {
     //可能不需要填充
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston, boolean summon) {
         super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
-        if(summon) summonBoulder(state, level, pos);
+        if (summon) summonBoulder(state, level, pos);
     }
 
     @Override

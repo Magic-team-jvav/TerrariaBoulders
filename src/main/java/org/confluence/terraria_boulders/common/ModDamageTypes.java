@@ -6,8 +6,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.damagesource.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
 import org.confluence.terraria_boulders.TerrariaBoulders;
+import org.jetbrains.annotations.Nullable;
 
 public final class ModDamageTypes {
     public static final ResourceKey<DamageType> BOULDER = register("boulder");

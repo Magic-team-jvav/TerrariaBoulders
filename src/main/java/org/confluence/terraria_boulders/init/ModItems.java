@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.confluence.terraria_boulders.TerrariaBoulders;
+import org.confluence.terraria_boulders.common.item.BoulderGloveItem;
 import org.confluence.terraria_boulders.common.item.CamouflagedBoulderItem;
 
 public final class ModItems {
@@ -42,6 +43,9 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> SNOW_BOULDER = REGISTER.registerSimpleBlockItem(ModBlocks.SNOW_BOULDER);//雪球巨石
     public static final DeferredItem<BlockItem> BOULDER_CANNON = REGISTER.registerSimpleBlockItem(ModBlocks.BOULDER_CANNON);//巨石大炮
 
+    //巨石手套
+    public static final DeferredItem<BoulderGloveItem> BOULDER_GLOVE = REGISTER.registerItem("boulder_glove",
+            (properties) -> new BoulderGloveItem(properties.stacksTo(1)));
 
 
     public static DeferredItem<BlockItem> registerBlockItemFood(String name, Item.Properties properties, Holder<? extends Block> block) {

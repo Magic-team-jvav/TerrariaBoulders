@@ -24,11 +24,15 @@ public class GiantBoulderBlockEntity extends BlockEntity {
         super(ModBlockEntityTypes.GIANT_BOULDER.get(), worldPosition, blockState);
     }
 
-    public Iterable<BlockPos> getRelativePosIter() { return RelativePosIter; }
+    public Iterable<BlockPos> getRelativePosIter() {
+        return RelativePosIter;
+    }
+
     public void setRelativePosIter(BlockPos pos, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {//第一个为自己，也是相对坐标原点
         RelativePosIter = getRelativePos(BlockPos.betweenClosed(minX, minY, minZ, maxX, maxY, maxZ), pos);
         this.syncData();
     }
+
     public void setRelativePosIter(BlockPos pos, BlockPos minPos, BlockPos maxPos) {
         RelativePosIter = getRelativePos(BlockPos.betweenClosed(minPos, maxPos), pos);
         this.syncData();
@@ -37,16 +41,17 @@ public class GiantBoulderBlockEntity extends BlockEntity {
 
     /**
      * @param absolutePositions 坐标范围的闭区间迭代器
-     * @param pos 原点坐标
+     * @param pos               原点坐标
      * @return 相对坐标的 Iterable
-     * */
-    private static Iterable<BlockPos> getRelativePos(Iterable<BlockPos> absolutePos, BlockPos pos){
+     *
+     */
+    private static Iterable<BlockPos> getRelativePos(Iterable<BlockPos> absolutePos, BlockPos pos) {
         //使用 Stream 将绝对坐标转换为相对坐标，并设置为Immutable
         return StreamSupport.stream(absolutePos.spliterator(), false)
-                        //相对坐标 = 绝对坐标 - 原点坐标 (pos)
-                        .map(absPos -> absPos.subtract(pos).immutable())
-                        //收集为不可变列表，防止 DFU 序列化或后续遍历时数据出错
-                        .collect(ImmutableList.toImmutableList());
+                //相对坐标 = 绝对坐标 - 原点坐标 (pos)
+                .map(absPos -> absPos.subtract(pos).immutable())
+                //收集为不可变列表，防止 DFU 序列化或后续遍历时数据出错
+                .collect(ImmutableList.toImmutableList());
     }
 
     //同步数据

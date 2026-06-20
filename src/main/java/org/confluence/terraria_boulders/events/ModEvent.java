@@ -1,4 +1,4 @@
-package org.confluence.terraria_boulders.event;
+package org.confluence.terraria_boulders.events;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
@@ -57,7 +57,7 @@ public class ModEvent {
     }
 
     @SubscribeEvent
-    public static void livingEntityUseItemEvent$Finish(LivingEntityUseItemEvent.Finish event){
+    public static void livingEntityUseItemEvent$Finish(LivingEntityUseItemEvent.Finish event) {
         ItemStack item = event.getItem();
         if (item.is(Tags.Items.DRINKS_WATER) || item.is(Tags.Items.DRINKS_WATERY)) {
             event.getEntity().removeEffect(ModEffects.CHOKING);
