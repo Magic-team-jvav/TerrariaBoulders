@@ -178,7 +178,7 @@ public class BoulderEntity extends Projectile {
         }
 
         //管理生命周期
-        updateLifetime();
+        //updateLifetime();
     }
 
     private @NonNull Direction getHitDirection() {
