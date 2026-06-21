@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.confluence.terraria_boulders.configs.TCCommonConfigs;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
-import org.confluence.terraria_boulders.util.VectorUtils;
+import org.confluence.terraria_boulders.util.ModUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -191,7 +191,7 @@ public class RainbowBoulderEntity extends BoulderEntity {
         } else if (direction == Direction.DOWN) {
             setDeltaMovement(x, -1.5f, z);
         } else {
-            Vec3 motion = VectorUtils.relativeScale(getDeltaMovement(), blockHitResult.getDirection().getAxis(), -bounceFactor);
+            Vec3 motion = ModUtils.VectorUtil.relativeScale(getDeltaMovement(), blockHitResult.getDirection().getAxis(), -bounceFactor);
             setDeltaMovement(motion);
         }
         if (targetPos != null) {

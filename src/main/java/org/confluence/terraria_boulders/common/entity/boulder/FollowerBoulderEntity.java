@@ -14,15 +14,24 @@ public class FollowerBoulderEntity extends BoulderEntity {
     private int tick;
     private Entity target;
 
-    public FollowerBoulderEntity(EntityType<FollowerBoulderEntity> pEntityType, Level pLevel) {
-        super(pEntityType, pLevel);
-        this.tick = 0;
+    public FollowerBoulderEntity(EntityType<FollowerBoulderEntity> entityType, Level level) {
+        super(entityType, level);
+        this.stepHeightDenominator = 1.0F;
+        this.unbreakable = true;
     }
 
     public FollowerBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
-        super(ModEntityTypes.FOLLOWER_BOULDER.get(), level, pos, blockState);
-        this.tick = 0;
+        super(level, pos, blockState);
+        this.stepHeightDenominator = 1.0F;
+        this.unbreakable = true;
     }
+
+    public FollowerBoulderEntity(EntityType<FollowerBoulderEntity> entityType, Level level, Vec3 pos, BlockState blockState) {
+        super(entityType, level, pos, blockState);
+        this.stepHeightDenominator = 1.0F;
+        this.unbreakable = true;
+    }
+
 
     @Override
     public void baseTick() {

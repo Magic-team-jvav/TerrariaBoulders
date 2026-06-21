@@ -28,14 +28,14 @@ public class SnowBoulderEntity extends BoulderEntity {
     //给注册用的构造函数
     public SnowBoulderEntity(EntityType<? extends BoulderEntity> type, Level level) {
         super(type, level);
-        this.infiniteDurability = true;
+        this.unbreakable = true;
         this.maxRemoveTick = 4000;
     }
 
     //给factory用的构造函数
     public SnowBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.SNOWY_BOULDER.get(), level, pos, blockState);
-        this.infiniteDurability = true;
+        this.unbreakable = true;
         this.maxRemoveTick = 4000;
     }
 

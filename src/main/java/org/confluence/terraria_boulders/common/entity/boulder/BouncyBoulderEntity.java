@@ -19,14 +19,14 @@ public class BouncyBoulderEntity extends BoulderEntity {
         super(entityType, level);
         speed = 0.7;
         bounceFactor = 0.99999999;
-        infiniteDurability = true;
+        unbreakable = true;
     }
 
     public BouncyBoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.BOUNCY_BOULDER.get(), level, pos, blockState);
         speed = 0.7;
         bounceFactor = 0.99999999;
-        infiniteDurability = true;
+        unbreakable = true;
     }
 
 //    @Override

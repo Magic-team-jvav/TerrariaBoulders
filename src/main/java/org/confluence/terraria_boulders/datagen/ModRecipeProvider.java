@@ -63,6 +63,8 @@ public class ModRecipeProvider extends RecipeProvider {
                 .pattern(" S ")
                 .unlockedBy("has_snowball", this.has(Items.SNOWBALL))
                 .save(this.output, recipeKey("snow_boulder_from_snowball"));
+
+        //手套
     }
 
     /**
