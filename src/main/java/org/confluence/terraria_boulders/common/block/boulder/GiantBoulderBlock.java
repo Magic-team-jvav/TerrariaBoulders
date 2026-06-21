@@ -25,7 +25,6 @@ import org.confluence.terraria_boulders.util.ModUtils;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
@@ -100,19 +99,20 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (!level.isClientSide()) {
-            BlockPosData data = getBetweenClosed(pos.above(Size / 2));
+        if (level.isClientSide()) {
+            return;
+        }
+        BlockPosData data = getBetweenClosed(pos.above(Size / 2));
 
-            Iterable<BlockPos> posIterable = data.iterablePos;
-            //填充方块
-            for (BlockPos iterPos : posIterable) {
-                //放置方块，跳过自己
-                if (!iterPos.equals(pos))
-                    level.setBlockAndUpdate(iterPos, ModBlocks.GIANT_BOULDER.get().defaultBlockState());
-                //更新相对坐标数据
-                if (level.getBlockEntity(iterPos) instanceof GiantBoulderBlockEntity be) {
-                    be.setRelativePosIter(iterPos, data.minPos, data.maxPos);
-                }
+        Iterable<BlockPos> posIterable = data.iterablePos;
+        //填充方块
+        for (BlockPos iterPos : posIterable) {
+            //放置方块，跳过自己
+            if (!iterPos.equals(pos))
+                level.setBlockAndUpdate(iterPos, ModBlocks.GIANT_BOULDER.get().defaultBlockState());
+            //更新相对坐标数据
+            if (level.getBlockEntity(iterPos) instanceof GiantBoulderBlockEntity be) {
+                be.setRelativePosIter(iterPos, data.minPos, data.maxPos);
             }
         }
     }
@@ -164,21 +164,29 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
     @Override
     public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable Player player) {
         //isSelfDestructing = true;
-        if (level instanceof ServerLevel serverLevel) {
-            if (level.getBlockEntity(pos) instanceof GiantBoulderBlockEntity giantBoulderBE) {//有方块实体
-                Iterable<BlockPos> relativePosIter = giantBoulderBE.getRelativePosIter();
-                //遍历迭代器
-                for (BlockPos iterRelativePos : relativePosIter) {
-                    BlockPos actualPos = pos.offset(iterRelativePos);//实际坐标
-                    if (level.getBlockState(actualPos).getBlock() instanceof GiantBoulderBlock) {//保证是巨石方块
-                        level.removeBlock(actualPos, false);//移除方块
-                    }
-                }
-                //生成巨型巨石实体
-                BlockPos centerPos = getCenterPos(relativePosIter, pos);
-                this.summonBoulder(this.defaultBlockState(), serverLevel, centerPos);
+        if (!(level instanceof ServerLevel serverLevel)) {
+//            isSelfDestructing = false;
+            return;
+        }
+
+        if (!(level.getBlockEntity(pos) instanceof GiantBoulderBlockEntity giantBoulderBE)) {
+//            isSelfDestructing = false;
+            return;
+        }
+
+        //有方块实体
+        Iterable<BlockPos> relativePosIter = giantBoulderBE.getRelativePosIter();
+        //遍历迭代器
+        for (BlockPos iterRelativePos : relativePosIter) {
+            BlockPos actualPos = pos.offset(iterRelativePos);//实际坐标
+            if (level.getBlockState(actualPos).getBlock() instanceof GiantBoulderBlock) {//保证是巨石方块
+                level.removeBlock(actualPos, false);//移除方块
             }
         }
+
+        //生成巨型巨石实体
+        BlockPos centerPos = getCenterPos(relativePosIter, pos);
+        this.summonBoulder(this.defaultBlockState(), serverLevel, centerPos);
         //isSelfDestructing = false;
     }
 

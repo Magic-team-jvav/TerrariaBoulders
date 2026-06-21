@@ -22,6 +22,19 @@ sourceSets.main.resources {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        name = "Progwml6 maven"
+        url = uri("https://dvs1.progwml6.com/files/maven/")
+    }
+    maven {
+        name = "ModMaven"
+        url = uri("https://modmaven.dev")
+    }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
 }
 
 base {
@@ -89,6 +102,11 @@ configurations {
 }
 
 dependencies {
+    implementation "maven.modrinth:jade:${jade_version}+neoforge"
+
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

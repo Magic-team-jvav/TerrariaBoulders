@@ -4,6 +4,16 @@
   "package": "org.confluence.terraria_boulders.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockAccessor",
+    "BlockItemAccessor",
+    "BlockPlaceContextAccessor",
+    "BlockStateBaseMixin",
+    "CryingObsidianBlockMixin",
+    "FenceBlockMixin",
+    "LeavesBlockMixin",
+    "LightEngineMixin",
+    "NetherrackBlockMixin",
+    "WetSpongeBlockMixin"
   ],
   "client": [
     "client.EntityRendererMixin",

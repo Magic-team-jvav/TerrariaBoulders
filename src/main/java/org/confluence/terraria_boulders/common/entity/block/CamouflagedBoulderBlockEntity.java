@@ -9,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -62,16 +61,18 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
             return;
         }
 
+        BlockState blockState = this.getBlockState();
         if (!this.level.isClientSide()) {
             //服务端操作：通知附近客户端接收新数据
-            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);//更新方块状态+发送给客户端
+            this.level.sendBlockUpdated(this.worldPosition, blockState, blockState, 3);//更新方块状态+发送给客户端
+            CamouflagedBoulderBlock.updateAndChangeState(this.level, this.worldPosition, this);
             return;
         }
 
         //客户端操作：重新构建ModelData
         this.requestModelDataUpdate();
         //触发区块重绘，让BER渲染器画出新模型
-        this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 8);
+        this.level.sendBlockUpdated(this.worldPosition, blockState, blockState, 8);
         //光照更新
         this.level.getLightEngine().checkBlock(this.worldPosition);
     }
