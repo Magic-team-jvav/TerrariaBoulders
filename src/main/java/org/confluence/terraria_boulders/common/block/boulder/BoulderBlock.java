@@ -3,9 +3,12 @@ package org.confluence.terraria_boulders.common.block.boulder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,11 +19,15 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
+import org.confluence.terraria_boulders.init.ModItems;
+import org.confluence.terraria_boulders.events.custom.IBlockBreakable;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class BoulderBlock extends Block {
+public class BoulderBlock extends Block implements IBlockBreakable {
     private static final VoxelShape SHAPE = Shapes.or(
             box(1.9, -0.1, 1.9, 14.1, 16.1, 14.1),
             box(-0.1, 1.9, 1.9, 16.1, 14.1, 14.1),
@@ -41,25 +48,66 @@ public class BoulderBlock extends Block {
         return true;
     }
 
+    /**
+     * 移除方块+生成巨石（by事件）
+     * @param level 世界
+     * @param state 方块状态
+     * @param pos 方块坐标
+     * @param player 触发者，可 null，如果为 null 永远自动索敌
+     * */
+    @Override
+    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable Player player) {
+        if(level instanceof ServerLevel serverLevel){
+            level.removeBlock(pos, false);
+            //如果拿着手套就不索敌
+            boolean isGloveInteract = player != null && (player.getItemInHand(InteractionHand.MAIN_HAND).is(ModItems.BOULDER_GLOVE) || player.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.BOULDER_GLOVE));
+            this.summonBoulder(state, serverLevel, pos, !isGloveInteract);
+        }
+    }
+
+    //移除方块（方法）+生成方块（by事件）
+//    public void onExcuse(BlockState state, ServerLevel level, BlockPos pos, boolean targetToNearestPlayer) {
+//        level.removeBlock(pos, false);
+//        //this.summonBoulder(state, level, pos, targetToNearestPlayer);
+//    }
+//    public void onExcuse(BlockState state, ServerLevel level, BlockPos pos) {
+//        //this.onExcuse(state, level, pos, true);
+//        level.removeBlock(pos, false);
+//        //this.summonBoulder(state, level, pos, targetToNearestPlayer);
+//    }
+
+//    @Override
+//    public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
+//        if(level instanceof ServerLevel serverLevel) {
+//            this.onExcuse(state, serverLevel, pos);
+//        }
+//    }
+
     @Override
     public void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
         //统一调用触发逻辑
         if (level instanceof ServerLevel serverLevel) {
-            onExecute(state, serverLevel, hit.getBlockPos());
+            this.onRemove(serverLevel, state, hit.getBlockPos(), null);
         }
     }
 
     @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
-        summonBoulder(state, level, pos);
+    protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> onHit) {
+        this.onRemove(level, state, pos, null);
+        super.onExplosionHit(state, level, pos, explosion, onHit);
     }
 
-    //可能不需要填充
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston, boolean summon) {
-        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
-        if (summon) summonBoulder(state, level, pos);
-    }
+//    @Override
+//    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+//        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
+//        summonBoulder(state, level, pos);
+//    }
+//
+//    //可能不需要填充
+//    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston, boolean summon) {
+//        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
+//        if (summon) summonBoulder(state, level, pos);
+//    }
 
     @Override
     public boolean canConnectRedstone(BlockState state, BlockGetter level, BlockPos pos, @Nullable Direction direction) {
@@ -78,32 +126,34 @@ public class BoulderBlock extends Block {
         BlockState below = level.getBlockState(pos.below());
 
         if (below.isAir() && level instanceof ServerLevel serverLevel) {
-            onExecute(state, serverLevel, pos);
+            this.onRemove(serverLevel, state, pos, null);
         }
     }
 
-    /**
-     * 统一的滚动触发点：负责移除方块并触发后续的召唤
-     */
-    public void onExecute(BlockState state, ServerLevel level, BlockPos pos) {
-        level.removeBlock(pos, false);
+    protected void summonBoulder(BlockState state, ServerLevel level, BlockPos pos, boolean targetToNearestPlayer) {
+        if (targetToNearestPlayer) {
+            this.summonBoulder(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
+        }
+        else{
+            this.summonBoulder(level, pos, state, _ -> null);
+        }
+    }
+    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {//实体化时是否有目标
+        this.summonBoulder(state, level, pos, true);
     }
 
-    protected void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {
-        summonBoulder(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
-    }
-
-    protected void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
+    public void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
         //调用工厂方法，如果是子类方块，会动态触发子类重写的方法
         BoulderEntity entity = this.createBoulderEntity(level, pos.getBottomCenter(), blockState);
-        this.onBoulderSummon(level, pos, blockState, function, entity); // 触发钩子
+        this.onBoulderSummon(level, pos, blockState, function, entity);//触发钩子
         level.addFreshEntity(entity);
     }
 
     //创建一个钩子，便于子类自定义
     protected void onBoulderSummon(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function, BoulderEntity entity) {
-        if (!level.getBlockState(pos.below()).isAir()) {
-            entity.targetTo(function.apply(entity));
+        Player player = function.apply(entity);
+        if (player != null && !level.getBlockState(pos.below()).isAir()) {
+            entity.targetTo(player);
         }
     }
 
@@ -112,6 +162,7 @@ public class BoulderBlock extends Block {
     }
 
     @Override
+    @NonNull
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }

@@ -4,18 +4,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -24,7 +21,7 @@ import org.confluence.terraria_boulders.common.entity.block.GiantBoulderBlockEnt
 import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.GiantBoulderEntity;
 import org.confluence.terraria_boulders.init.ModBlocks;
-import org.confluence.terraria_boulders.util.LevelUtil;
+import org.confluence.terraria_boulders.util.ModUtils;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
@@ -32,7 +29,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
-    private boolean isSelfDestructing = false;
+    //private boolean isSelfDestructing = false;
     private int Size = 3;// 3×3×3 体积
 
     private double scale(double value) {
@@ -96,7 +93,7 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
                 data.maxPos.getX() + 1.0, data.maxPos.getY() + 1.0, data.maxPos.getZ() + 1.0
         ).deflate(0.01);//略微收缩防边缘误判
         //空间内不能有其他东西
-        if (!LevelUtil.noCollision(context.getLevel(), this.Size >= 5 ? null : context.getPlayer(), checkBox))
+        if (!ModUtils.LevelUtil.noCollision(context.getLevel(), this.Size >= 5 ? null : context.getPlayer(), checkBox))
             return null;//巨石过大就不管会不会卡你了，手都不够长的
         return super.getStateForPlacement(context);
     }
@@ -138,34 +135,35 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
         return new BlockPosData(minPos, maxPos, BlockPos.betweenClosed(minPos, maxPos));
     }
 
-    @Override
-    @NonNull
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!isSelfDestructing) this.destroyGiantBlock(level, pos);
-        return super.playerWillDestroy(level, pos, state, player);
-    }
+//    @Override
+//    @NonNull
+//    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+//        /*if (!isSelfDestructing) */this.destroyGiantBlock(level, pos);
+//        return super.playerWillDestroy(level, pos, state, player);
+//    }
 
-    @Override
-    protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> onHit) {
-        if (!isSelfDestructing) this.destroyGiantBlock(level, pos);
-        super.onExplosionHit(state, level, pos, explosion, onHit);
-    }
+//    @Override
+//    protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> onHit) {
+//        /*if (!isSelfDestructing) */this.destroyGiantBlock(level, pos);
+//        super.onExplosionHit(state, level, pos, explosion, onHit);
+//    }
+//
+//    @Override
+//    public void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
+//        /*if (!isSelfDestructing) */this.destroyGiantBlock(level, hit.getBlockPos());
+//        super.onProjectileHit(level, state, hit, projectile);
+//    }
 
-    @Override
-    public void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
-        if (!isSelfDestructing) this.destroyGiantBlock(level, hit.getBlockPos());
-        super.onProjectileHit(level, state, hit, projectile);
-    }
-
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston, false);
-        if (!isSelfDestructing) this.destroyGiantBlock(level, pos);
-    }
+//    @Override
+//    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+//        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
+//        /*if (!isSelfDestructing) */this.destroyGiantBlock(level, pos);
+//    }
 
     //摧毁并生成巨型巨石实体
-    private void destroyGiantBlock(Level level, BlockPos pos) {
-        isSelfDestructing = true;
+    @Override
+    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable Player player) {
+        //isSelfDestructing = true;
         if (level instanceof ServerLevel serverLevel) {
             if (level.getBlockEntity(pos) instanceof GiantBoulderBlockEntity giantBoulderBE) {//有方块实体
                 Iterable<BlockPos> relativePosIter = giantBoulderBE.getRelativePosIter();
@@ -181,7 +179,7 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
                 this.summonBoulder(this.defaultBlockState(), serverLevel, centerPos);
             }
         }
-        isSelfDestructing = false;
+        //isSelfDestructing = false;
     }
 
     //用钩子确定entity的大小
@@ -210,7 +208,6 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
      * @return 相对坐标 Vec3
      */
     public static Vec3 getRelativeCenterVec3(Iterable<BlockPos> relativePosIter) {
-        //System.out.println("relativePosIter: " + (relativePosIter == null ? "null" : relativePosIter));
 
         //为空的话返回null
         if (relativePosIter == null || !relativePosIter.iterator().hasNext()) {

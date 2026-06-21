@@ -5,14 +5,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -26,12 +29,11 @@ import org.confluence.terraria_boulders.common.ModDamageTypes;
 import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
 import org.confluence.terraria_boulders.init.ModBlocks;
 import org.confluence.terraria_boulders.init.ModEntityTypes;
-import org.confluence.terraria_boulders.util.VectorUtils;
+import org.confluence.terraria_boulders.init.ModItems;
+import org.confluence.terraria_boulders.util.ModUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -47,6 +49,7 @@ public class BoulderEntity extends Projectile {
         }
         return true;
     };
+    public static final Predicate<Entity> ENTITY_NORMAL = Entity::isAlive;
     private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE = SynchedEntityData.defineId(BoulderEntity.class, EntityDataSerializers.BLOCK_STATE);
     private final Object2IntOpenHashMap<UUID> hitHistory = new Object2IntOpenHashMap<>();
 
@@ -66,9 +69,20 @@ public class BoulderEntity extends Projectile {
     public int stillTickCount; // 静止刻计时
     public Vec3 preMoveVelocity; // 在一刻里面移动前的速度
     //属性：损坏值
-    protected float durability = 5.0f;//耐久值，默认5
-    protected float damageValue = 0.0f;//损坏度，达到durability后损坏
-    protected boolean infiniteDurability = false;//无限损坏度
+    protected float breakLimit = 5.0f;//耐久值，默认5
+    protected float breakValue = 0.0f;//损坏度，达到breakLimit后损坏
+    protected boolean unbreakable = false;//无限损坏度
+
+    public boolean pulling = false;//是否正在被拉动
+
+    public float stepHeightDenominator = 3.0f;//上坡高度分母
+
+    public boolean horizontalCollision;//override父类字段
+    public boolean verticalCollision;
+
+    //推巨石
+    public double boulderMassFactor = 5.0D;//质量乘数
+    public double pushScaleFactor = 0.40D;//形变推力变比系数，数值越小推的越慢
 
     public BoulderEntity(EntityType<? extends BoulderEntity> entityType, Level level) {
         super(entityType, level);
@@ -119,8 +133,9 @@ public class BoulderEntity extends Projectile {
 
         if (isRemoved()) return;
 
-        //先施加重力，不然空中水平移动时测不到地板
-        applyGravity();
+        //先施加环境影响（重力+上一刻的摩擦力衰减），不应用重力空中水平移动时测不到地板
+        this.applyGravity();
+        this.applyFrictionAndRotation();
 
         //记录AABB移动前的速度
         this.preMoveVelocity = getDeltaMovement();
@@ -130,16 +145,38 @@ public class BoulderEntity extends Projectile {
         moveAndUpdateNeighbors();
         Vec3 newPos = this.position();//移动后的位置
 
-        // 碰撞检测
+        //计算实际位移
+        Vec3 actualMovement = newPos.subtract(oldPos);
+
+        //实体碰撞检测
+        this.hitDetector(newPos.subtract(oldPos));
+
+        //碰撞拦截器：
+        //水平碰撞，有真正的X/Z移动意图才算撞墙
+        this.horizontalCollision = super.horizontalCollision && (Math.abs(this.preMoveVelocity.x) > 0.001D || Math.abs(this.preMoveVelocity.z) > 0.001D);
+        //垂直碰撞：只有速度明显时才是垂直撞击
+        //过小阈值拒绝放行
+        boolean isSevereVertical = Math.abs(this.preMoveVelocity.y) > 0.08D || Math.abs(actualMovement.y) > 0.08D;
+        this.verticalCollision = super.verticalCollision && isSevereVertical;
+
+        // 方块碰撞检测
         if (this.horizontalCollision || this.verticalCollision) {
             Direction hitDir = this.getHitDirection();
             this.onBoulderHitBlock(new BlockHitResult(newPos, hitDir, this.blockPosition(), false));
         }
+        // 原版认为撞击了地面，但因没有势能被拦截
+        else if (super.verticalCollision && !this.verticalCollision) {
 
-        //计算碰撞（实体）
-        hitDetector(newPos.subtract(oldPos));
-        //摩擦力、旋转
-        applyFrictionAndRotation();
+            // 如果是在平地上静止，且有向下的重力假速度（如经典的-0.08）
+            if (this.getDeltaMovement().y <= 0.0D) {
+                //把Y轴速度和任何微小的水平滑行速度清零
+                this.setDeltaMovement(this.getDeltaMovement().x, 0.0D, this.getDeltaMovement().z);
+            }
+
+            //归零原版坠落高度累积，防止在平地上突然移动
+            this.fallDistance = 0.0F;
+        }
+
         //管理生命周期
         updateLifetime();
     }
@@ -167,12 +204,12 @@ public class BoulderEntity extends Projectile {
 
         // 水平撞墙
         if (this.horizontalCollision) {
-            horizontalHitBlock(blockHitResult, direction);
+            this.horizontalHitBlock(blockHitResult, direction);
         }
 
         // 垂直撞地/天花板
         if (this.verticalCollision) {
-            verticalHitBlock(blockHitResult, direction);
+            this.verticalHitBlock(blockHitResult, direction);
         }
     }
 
@@ -204,7 +241,7 @@ public class BoulderEntity extends Projectile {
 
         if (bounced) {
             setDeltaMovement(newMotionX, postMoveVelocity.y, newMotionZ);
-            this.damageValue += 1.0f;
+            if(!this.pulling) this.breakValue += 1.0f;//拉动时不增加损坏值
             playHitBlockSound(level());
         }
     }
@@ -226,10 +263,9 @@ public class BoulderEntity extends Projectile {
                 double motionX = postMoveVelocity.x;
                 double motionZ = postMoveVelocity.z;
 
-                //如果没有水平速度，则弱追踪玩家
+                //如果没有水平速度，则弱追踪玩家（检测tick数防止刚出来就乱锁）
                 if (getHorizontalVectorLength(this.preMoveVelocity) < 0.0001) {
                     Player nearestPlayer = this.getNearestPlayer();
-
                     if (nearestPlayer != null) {
                         // 发现玩家，赋予弱追踪的水平初速度
                         Vec3 toPlayer = nearestPlayer.position().subtract(this.position());
@@ -316,28 +352,45 @@ public class BoulderEntity extends Projectile {
     }
 
     //碰撞检测器
-    protected void hitDetector(Vec3 deltaMovement) {
-        double actualSpeed = deltaMovement.length();
+    protected void hitDetector(Vec3 actualMovement) {
+        //使用预期的物理速度防止刚体造成的一些问题
+        Vec3 damageVelocity = this.preMoveVelocity != null ? this.preMoveVelocity : actualMovement;
+        double speed = damageVelocity.length();
+        //有速度或旋转时才有伤害
+        boolean hasDamage = (speed > 0.05D) || !ModUtils.MathUtil.equal(this.rotateO - this.rotate, 0);
 
-        //移动或滚动才触发伤害
-        if (!(actualSpeed > 0.05D) && this.rotateO - this.rotate == 0) {
-            return;
-        }
+        //贴合实际预期运动轨迹的扫描框
+        AABB sweepBox = this.getBoundingBox().expandTowards(-damageVelocity.x, -damageVelocity.y, -damageVelocity.z).inflate(0.05D);
+        // 还原出移动前的位置，用于精确计算相对方向
+        Vec3 oldPos = this.position().subtract(actualMovement);
 
-        //贴合实际运动轨迹的扫描框
-        AABB sweepBox = this.getBoundingBox().expandTowards(-deltaMovement.x, -deltaMovement.y, -deltaMovement.z)/*.inflate(0.01D)*/;
+        // 扫描轨迹上所有实体
+        for (Entity entity : this.level().getEntities(this, sweepBox, ENTITY_NORMAL)) {
+            if (entity == this) continue;
 
-        //还原出移动前的位置，用于精确计算相对方向
-        Vec3 oldPos = this.position().subtract(deltaMovement);
+            //获取从巨石中心指向实体的平面方向向量
+            Vec3 toEntity = entity.position().subtract(oldPos);
+            toEntity = new Vec3(toEntity.x, 0, toEntity.z).normalize();
 
-        //扫描轨迹上所有实体
-        for (Entity entity : level().getEntities(this, sweepBox, ENTITY_PREDICATE)) {
+            //判断是谁撞谁，自己碰巨石不算伤害
+            Vec3 pushNormal = new Vec3(this.getX() - entity.getX(), 0, this.getZ() - entity.getZ()).normalize();
+            //巨石预期运动方向是否与玩家推的方向相同，点积>0.7D说明巨石此时正在顺着玩家推的方向前进
+            boolean isBeingPushedForward = speed > 0.001D && damageVelocity.normalize().dot(pushNormal) > 0.7D;
+            //计算正面碰撞，防除0
+            double dotProduct = speed > 0.001D ? damageVelocity.normalize().dot(toEntity) : 0.0D;//巨石完全静止为0
 
-            //只对巨石前方的实体造成伤害
-            Vec3 toEntity = entity.position().subtract(oldPos).normalize();
-
-            if (deltaMovement.normalize().dot(toEntity) > 0) {
-                this.onBoulderHitEntity(new EntityHitResult(entity));//造成伤害
+            //向量点积大于90度视为正面碰撞
+            if (dotProduct > 0.0D) {
+                if (hasDamage && ModUtils.EntityUtil.isSurvivalOrMob(entity) && !isBeingPushedForward) {
+                    // 触发正面碰撞事件（造成碾压伤害）
+                    this.onBoulderHitEntity(new EntityHitResult(entity));
+                }
+            }
+            else {
+                //非正面接触尝试推动
+                if (entity instanceof LivingEntity livingEntity) {
+                    this.onPushBoulder(livingEntity);
+                }
             }
         }
     }
@@ -354,7 +407,7 @@ public class BoulderEntity extends Projectile {
 
         float damage = this.getDamage(entityHitResult);
         if(damage >= 0.0F){
-            entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), getDamage(entityHitResult));
+            entity.hurt(ModDamageTypes.of(entity.level(), ModDamageTypes.BOULDER, this), damage);
         } else{
             //（未来可能出一个治愈巨石？）
         }
@@ -362,12 +415,71 @@ public class BoulderEntity extends Projectile {
         hitHistory.put(uuid, 5);
     }
 
+    /**
+     * 推巨石
+     */
+    protected void onPushBoulder(LivingEntity entity) {
+        if (entity.level().isClientSide() && !(entity instanceof Player)) return;
+
+        //有手套即可
+        if (entity.getItemInHand(InteractionHand.MAIN_HAND).is(ModItems.BOULDER_GLOVE) || entity.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.BOULDER_GLOVE)) {
+
+            //基础物理属性
+            double m = 1.0;//玩家质量
+            double M = Math.max(0.5, this.radius * 2.0 * this.boulderMassFactor);//巨石质量
+            double e = 0.5;//恢复系数e（0.0~1.0），石头弹性低，钝击感强
+
+            //获取双方AABB
+            AABB boulderBox = this.getBoundingBox();
+            AABB entityBox = entity.getBoundingBox();
+
+            //计算重叠相交，模拟形变
+            AABB intersect = boulderBox.intersect(entityBox);
+
+            //没碰上或未发生形变
+            if (intersect.getXsize() <= 0.0 && intersect.getZsize() <= 0.0) return;
+
+            //获取平面法向量，从生物中心指向巨石中心
+            Vec3 normal = this.position().subtract(entity.position());
+            normal = new Vec3(normal.x, 0, normal.z).normalize();
+
+            //利用挤压形变的轴向投影，推导出碰撞方向上的穿透深度
+            double overlapX = intersect.getXsize();
+            double overlapZ = intersect.getZsize();
+
+            //计算速度
+            Vec3 boulderVel = this.getDeltaMovement();//巨石速度向量
+            double V0n = boulderVel.x * normal.x + boulderVel.z * normal.z;
+            //将重合体积（形变）折算为法向等效运动速度标量
+            double v0n = Math.max(overlapX, overlapZ) * this.pushScaleFactor;
+
+            //生物推力小于石头速度，说明石头快
+            if (v0n <= V0n) return;
+
+            //速度继承与质量衰减模型，巨石继承大部分速度，巨石质量M仅作为衰减系数
+            double massFactor = m / (m + M * 0.3);
+
+            //一维弹性碰撞公式
+            double Vn = V0n + (v0n - V0n) * (1.0 + e) * 0.5 * massFactor;
+
+            //还原为三维向量
+            Vec3 newBoulderVel = boulderVel.add(normal.scale(Vn - V0n));
+
+            //应用计算结果
+            this.setDeltaMovement(newBoulderVel);
+
+            //跨端同步
+            if (this.level() instanceof ServerLevel serverLevel) {
+                ClientboundSetEntityMotionPacket packet = new ClientboundSetEntityMotionPacket(this);
+                serverLevel.getChunkSource().sendToTrackingPlayers(this, packet);
+            }
+        }
+    }
+
     protected void moveAndUpdateNeighbors() {
         Vec3 deltaMovement = getDeltaMovement();
         setYRot((float) (Mth.atan2(deltaMovement.x, deltaMovement.z) * Mth.RAD_TO_DEG));
-        //applyGravity();
 
-        //deltaMovement = getDeltaMovement();
         move(MoverType.SELF, deltaMovement);
 
         Vec3 motion = getDeltaMovement();
@@ -398,13 +510,15 @@ public class BoulderEntity extends Projectile {
 
     //管理生命周期
     protected void updateLifetime() {
-        double currentSpeed = getDeltaMovement().length();
 
-        //检查是否超时或静止太久
-        if (tickCount >= maxRemoveTick || currentSpeed < minRemoveSpeed && stillTickCount == maxStillTick) {
-            onRemove();
+        //正在被拉动的巨石无视生命周期
+        if(this.pulling) {
+            this.stillTickCount = 0;   //不触发maxStillTick判定
+            //this.tickCount = 0;        //冻结生长时间，防止触发maxRemoveTick判定
             return;
         }
+
+        double currentSpeed = getDeltaMovement().length();
 
         if (currentSpeed < minRemoveSpeed) {
             stillTickCount++;
@@ -412,11 +526,37 @@ public class BoulderEntity extends Projectile {
             stillTickCount = 0;
         }
 
+        //检查是否超时或静止太久
+        if (tickCount >= maxRemoveTick || currentSpeed < minRemoveSpeed && stillTickCount == maxStillTick) {
+            onRemove();
+            return;
+        }
+
         //检查是否已损坏
-        if (!this.infiniteDurability && this.damageValue >= this.durability){
+        if (!this.unbreakable && this.breakValue >= this.breakLimit){
             this.onRemove();
         }
     }
+
+    //碰撞箱是否相交（原版playerTouch检测没碰到就触发）
+//    public boolean hasHitboxTouch(/*BoulderEntity boulder, */LivingEntity toucher) {
+//        return this.getBoundingBox().inflate(0.05D).intersects(toucher.getBoundingBox());
+//    }
+
+    //刚体化
+    @Override
+    public boolean canBeCollidedWith(Entity entity) {
+        return this.isAlive();
+    }
+
+//    @Override
+//    public void playerTouch(Player player) {
+//        super.playerTouch(player);
+//        if (!this.level().isClientSide() && this.isAlive() && this.hasHitboxTouch(player)) {
+//            //用手套触发推石头逻辑
+//            this.onPushBoulder(player);
+//        }
+//    }
 
     @Override
     protected double getDefaultGravity() {
@@ -431,7 +571,7 @@ public class BoulderEntity extends Projectile {
     }
 
     public float getDamage(EntityHitResult entityHitResult) {
-        return 100.0F * (float) Math.clamp(getDeltaMovement().length() * 3, 0, 1);
+        return 100.0F * Mth.clamp((float) getDeltaMovement().length() * 3.0F, 0.0F, 1.0F);
     }
 
     public void targetToPlayer() {
@@ -459,7 +599,12 @@ public class BoulderEntity extends Projectile {
 
     @Override
     public float maxUpStep() {
-        return this.radius * 2.0f / 3.0f;//可以上自己1/3大小的坡
+        return this.radius * 2.0f / this.stepHeightDenominator;//可以上自己1/3大小的坡
+    }
+
+    @Override
+    public boolean isPickable() {
+        return true;//开启鼠标选中/右键检测权
     }
 
     public BlockState getBlockState() {
@@ -479,13 +624,13 @@ public class BoulderEntity extends Projectile {
         this.entityData.set(DATA_BLOCK_STATE, state);
     }
 
-    public float getDurability() {return durability;}
+    public float getBreakLimit() {return breakLimit;}
 
-    public void setDurability(float durability) {this.durability = durability;}
+    public void setBreakLimit(float breakLimit) {this.breakLimit = breakLimit;}
 
-    public float getDamageValue() {return damageValue;}
+    public float getBreakValue() {return breakValue;}
 
-    public void setDamageValue(float damageValue) {this.damageValue = damageValue;}
+    public void setBreakValue(float breakValue) {this.breakValue = breakValue;}
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
@@ -511,8 +656,8 @@ public class BoulderEntity extends Projectile {
         speed = input.getDoubleOr("Speed", 0.7);
         minRemoveSpeed = input.getDoubleOr("MinRemoveSpeed", 0.007);
         generation = input.getIntOr("Generation", 0);
-        this.damageValue = input.getFloatOr("DamageValue", 0.0F);
-        this.durability = input.getFloatOr("Durability", 5.0F);
+        this.breakValue = input.getFloatOr("DamageValue", 0.0F);
+        this.breakLimit = input.getFloatOr("Durability", 5.0F);
     }
 
     @Override
@@ -531,7 +676,7 @@ public class BoulderEntity extends Projectile {
         output.putDouble("Speed", speed);
         output.putDouble("MinRemoveSpeed", minRemoveSpeed);
         output.putInt("Generation", generation);
-        output.putFloat("DamageValue", damageValue);
-        output.putFloat("Durability", durability);
+        output.putFloat("DamageValue", breakValue);
+        output.putFloat("Durability", breakLimit);
     }
 }

@@ -107,7 +107,7 @@ public class CamouflagedBoulderBehaviours {
                 if (destroyedAny) {
                     // 在服务端处理数据
                     if (!level.isClientSide()) {
-                        e.setDamageValue(e.getDamageValue() + 1.0f); // 增加损坏值
+                        e.setBreakValue(e.getBreakValue() + 1.0f); // 增加损坏值
                     }
 
                     //双端同时纠正速度
@@ -120,7 +120,7 @@ public class CamouflagedBoulderBehaviours {
             }
 
             if (!level.isClientSide()) {
-                e.setDurability(10.0f); // 设置固定耐久值
+                e.setBreakLimit(10.0f); // 设置固定耐久值
             }
 
             // 如果全是硬墙拆不动，或者正在落地，执行父类的反弹物理

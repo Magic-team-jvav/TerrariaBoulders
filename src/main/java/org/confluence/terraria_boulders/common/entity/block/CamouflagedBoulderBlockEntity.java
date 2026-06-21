@@ -149,15 +149,15 @@ public class CamouflagedBoulderBlockEntity extends BlockEntity {
         return saveWithoutMetadata(registries);
     }
 
-    @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
-        if (!(state.getBlock() instanceof CamouflagedBoulderBlock boulderBlock)) {
-            return;
-        }
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        boulderBlock.summonBoulder(this.getMimicState(), serverLevel, pos);
-    }
+//    @Override
+//    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+//        super.preRemoveSideEffects(pos, state);
+//        if (!(state.getBlock() instanceof CamouflagedBoulderBlock boulderBlock)) {
+//            return;
+//        }
+//        if (!(level instanceof ServerLevel serverLevel)) {
+//            return;
+//        }
+//        boulderBlock.summonBoulder(this.getMimicState(), serverLevel, pos);
+//    }
 }

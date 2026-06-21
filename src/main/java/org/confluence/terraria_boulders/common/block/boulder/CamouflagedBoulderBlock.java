@@ -25,18 +25,17 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.Tags;
 import org.confluence.terraria_boulders.common.entity.block.CamouflagedBoulderBlockEntity;
-import org.confluence.terraria_boulders.common.entity.boulder.BoulderEntity;
 import org.confluence.terraria_boulders.common.entity.boulder.CamouflagedBoulderEntity;
+import org.confluence.terraria_boulders.events.custom.IUseItemOnBlock;
 import org.confluence.terraria_boulders.init.ModDataComponents;
+import org.confluence.terraria_boulders.init.ModItems;
 import org.confluence.terraria_boulders.init.ModTags;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implements EntityBlock {
+public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implements EntityBlock, IUseItemOnBlock {
     public static final Supplier<BlockState> DEFAULT_CAMOUFLAGE = Blocks.STONE::defaultBlockState;
 
     public CamouflagedBoulderBlock(Properties properties) {
@@ -46,24 +45,20 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
                 CamouflagedBoulderEntity::new);
     }
 
-    public static BlockState getBlockState(Level level, BlockPos pos) {
-        return level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be ? be.getMimicState() : DEFAULT_CAMOUFLAGE.get();
+    @Override
+    public void onRemove(Level level, BlockState _unuse, BlockPos pos, @Nullable Player player){//不使用没有方块伪装数据的bs
+        super.onRemove(level, CamouflagedBoulderBlock.getBlockState(level, pos), pos, player);
     }
 
-    @Override
-    protected void onExplosionHit(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> onHit) {
-        onExecute(state, level, pos);
-        super.onExplosionHit(state, level, pos, explosion, onHit);
+    //获取方块实体中存储的方块状态
+    public static BlockState getBlockState(Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be ? be.getMimicState() : DEFAULT_CAMOUFLAGE.get();
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(@NonNull BlockPos pos, @NonNull BlockState state) {
         return new CamouflagedBoulderBlockEntity(pos, state);
-    }
-
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
     }
 
     //中键拾取
@@ -79,16 +74,6 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
             stack.set(ModDataComponents.MIMIC_STATE.get(), mimic);
         }
         return stack;
-    }
-
-    @Override
-    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {
-        super.summonBoulder(state, level, pos);
-    }
-
-    @Override
-    protected void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
-        super.summonBoulder(level, pos, blockState, function);
     }
 
     //放置方块
@@ -141,11 +126,13 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     @Override
     @NonNull
     public InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        //super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+
         if (!(level.getBlockEntity(pos) instanceof CamouflagedBoulderBlockEntity be)) {
             return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
         Item item = stack.getItem();
-        BlockState currentMimic = be.getMimicState();
+        BlockState mimicState = be.getMimicState();
 
         //伪装逻辑
         if (player.isShiftKeyDown() && (item instanceof BlockItem blockItem) && !(blockItem.getBlock() instanceof CamouflagedBoulderBlock)) {
@@ -155,7 +142,7 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
 
             if (nextMimic != null) be.setMimicState(nextMimic);
 
-            if ((currentMimic == null || !currentMimic.equals(nextMimic)) && !be.isLocked()) {
+            if ((mimicState == null || !mimicState.equals(nextMimic)) && !be.isLocked()) {
                 if (!level.isClientSide()) {
                     be.setMimicState(nextMimic);
                     level.levelEvent(null, 2001, pos, Block.getId(state));
@@ -196,16 +183,22 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
         }
 
         //触发可交互方块陷阱
-        if (currentMimic != null && !currentMimic.isAir()) {
-            if (shouldTriggerTrap(currentMimic)) {
+        if (mimicState != null && !mimicState.isAir() && !stack.is(ModItems.BOULDER_GLOVE)) {//有手套不触发陷阱
+            if (this.shouldTriggerTrap(mimicState)) {
                 if (!level.isClientSide()) {
                     //触发巨石
-                    this.onExecute(state, (ServerLevel) level, pos);
+                    this.onRemove((ServerLevel) level, mimicState, pos, player);
                 }
                 return InteractionResult.SUCCESS;
             }
         }
         return InteractionResult.TRY_WITH_EMPTY_HAND;
+    }
+
+    @Override
+    public InteractionResult useItemOnBlock(ItemStack itemStack, BlockState state, Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
+
+        return InteractionResult.PASS;
     }
 
     //伪装方块是否应该触发陷阱
