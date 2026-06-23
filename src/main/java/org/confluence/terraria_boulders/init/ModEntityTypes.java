@@ -67,7 +67,7 @@ public final class ModEntityTypes {
             EntityType.Builder.<GiantBoulderEntity>of(GiantBoulderEntity::new, MobCategory.MISC)
                     .sized(1, 1)//Size可能不同，后面会动态重置
                     .clientTrackingRange(6));
-    public static final DeferredHolder<EntityType<?>, EntityType<SnowBoulderEntity>> SNOWY_BOULDER = register("snowy_boulder", () ->
+    public static final DeferredHolder<EntityType<?>, EntityType<SnowBoulderEntity>> SNOWY_BOULDER = register("snow_boulder", () ->
             EntityType.Builder.<SnowBoulderEntity>of(SnowBoulderEntity::new, MobCategory.MISC)
                     .sized(1, 1)
                     .clientTrackingRange(6));

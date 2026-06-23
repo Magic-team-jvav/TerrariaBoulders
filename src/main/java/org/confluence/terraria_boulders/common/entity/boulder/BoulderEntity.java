@@ -73,7 +73,8 @@ public class BoulderEntity extends Projectile {
     protected float breakValue = 0.0f;//损坏度，达到breakLimit后损坏
     protected boolean unbreakable = false;//无限损坏度
 
-    public boolean pulling = false;//是否正在被拉动
+    //public boolean pulling = false;//是否正在被拉动
+    public boolean interactedWithGlove = false;//是否被手套动过
 
     public float stepHeightDenominator = 3.0f;//上坡高度分母
 
@@ -178,7 +179,7 @@ public class BoulderEntity extends Projectile {
         }
 
         //管理生命周期
-        //updateLifetime();
+        updateLifetime();
     }
 
     private @NonNull Direction getHitDirection() {
@@ -241,7 +242,8 @@ public class BoulderEntity extends Projectile {
 
         if (bounced) {
             setDeltaMovement(newMotionX, postMoveVelocity.y, newMotionZ);
-            if(!this.pulling) this.breakValue += 1.0f;//拉动时不增加损坏值
+            //if(!this.pulling) this.breakValue += 1.0f;//拉动时不增加损坏值
+            if(!this.interactedWithGlove) this.breakValue += 1.0f;
             playHitBlockSound(level());
         }
     }
@@ -253,7 +255,6 @@ public class BoulderEntity extends Projectile {
 
         // 撞到地面 (Direction.UP)
         if (direction == Direction.UP) {
-
             // 下落速度够大（防止平地滚动的细微高低差触发跳跃）
             if (this.preMoveVelocity.y < -0.1) {
                 // 结算沉重的 Y 轴反弹
@@ -279,7 +280,8 @@ public class BoulderEntity extends Projectile {
                         this.setYRot((float) (Mth.atan2(motionX, motionZ) * Mth.RAD_TO_DEG));
                         this.yRotO = this.getYRot();
 
-                    } else if (!level.isClientSide()) {
+                    } else //被手套放下的巨石有一个免疫期，这个期间不会触发随机弹跳
+                        if (!level.isClientSide() && !(this.interactedWithGlove && this.stillTickCount < this.maxStillTick)) {
                         // 没有玩家，随机弹跳
                         Vec3 pos = this.position();
                         Vec3 validMotion = null;
@@ -424,6 +426,8 @@ public class BoulderEntity extends Projectile {
         //有手套即可
         if (entity.getItemInHand(InteractionHand.MAIN_HAND).is(ModItems.BOULDER_GLOVE) || entity.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.BOULDER_GLOVE)) {
 
+            //this.interactedWithGlove = true;
+
             //基础物理属性
             double m = 1.0;//玩家质量
             double M = Math.max(0.5, this.radius * 2.0 * this.boulderMassFactor);//巨石质量
@@ -510,21 +514,23 @@ public class BoulderEntity extends Projectile {
 
     //管理生命周期
     protected void updateLifetime() {
-
         //正在被拉动的巨石无视生命周期
-        if(this.pulling) {
-            this.stillTickCount = 0;   //不触发maxStillTick判定
-            //this.tickCount = 0;        //冻结生长时间，防止触发maxRemoveTick判定
-            return;
-        }
+//        if(this.pulling) {
+//            this.stillTickCount = 0;   //不触发maxStillTick判定
+//            //this.tickCount = 0;        //冻结生长时间，防止触发maxRemoveTick判定
+//            return;
+//        }
 
+        //计时器
         double currentSpeed = getDeltaMovement().length();
-
         if (currentSpeed < minRemoveSpeed) {
             stillTickCount++;
         } else {
             stillTickCount = 0;
         }
+
+        //被手套交互过的巨石无视生命周期
+        if(this.interactedWithGlove) return;
 
         //检查是否超时或静止太久
         if (tickCount >= maxRemoveTick || currentSpeed < minRemoveSpeed && stillTickCount == maxStillTick) {

@@ -20,7 +20,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.confluence.terraria_boulders.common.block.boulder.BoulderBlock;
@@ -43,6 +42,7 @@ public class BoulderGloveItem extends Item implements IEntityInteractable {
     public double limitResistance = 0.4D;//达到危险区域内的拉动阻力
     public double friction = 0.75;//摩擦阻力，每tick削减速度，越大越光滑
     public double maxSpeed = 0.18;//速度上限（低，挪动沉重）
+    private float stepHeightDenominatorCache = 3.0f;//缓存
 
     public BoulderGloveItem(Properties properties) {
         super(properties);
@@ -180,7 +180,9 @@ public class BoulderGloveItem extends Item implements IEntityInteractable {
     }
 
     public void connect(BoulderEntity boulder) {
-        boulder.pulling = true;
+        //boulder.pulling = true;
+        //boulder.interactedWithGlove = true;
+        this.stepHeightDenominatorCache = boulder.stepHeightDenominator;//缓存
         boulder.stepHeightDenominator = 1.0F;
     }
 
@@ -192,8 +194,8 @@ public class BoulderGloveItem extends Item implements IEntityInteractable {
 
             //复位状态
             if (boulder != null && boulder.isAlive()) {
-                boulder.pulling = false;
-                boulder.stepHeightDenominator = 3.0F;
+                //boulder.pulling = false;
+                boulder.stepHeightDenominator = this.stepHeightDenominatorCache;
             }
 
             //停止使用

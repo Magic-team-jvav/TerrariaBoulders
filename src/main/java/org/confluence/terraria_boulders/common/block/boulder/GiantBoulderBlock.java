@@ -162,7 +162,7 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
 
     //摧毁并生成巨型巨石实体
     @Override
-    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable Player player) {
+    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable LivingEntity trigger) {
         //isSelfDestructing = true;
         if (!(level instanceof ServerLevel serverLevel)) {
 //            isSelfDestructing = false;
@@ -186,17 +186,25 @@ public class GiantBoulderBlock extends BoulderBlock implements EntityBlock {
 
         //生成巨型巨石实体
         BlockPos centerPos = getCenterPos(relativePosIter, pos);
-        this.summonBoulder(this.defaultBlockState(), serverLevel, centerPos);
+        this.summonBoulder(this.defaultBlockState(), serverLevel, centerPos, trigger);
         //isSelfDestructing = false;
     }
 
     //用钩子确定entity的大小
     @Override
-    protected void onBoulderSummon(Level level, BlockPos centerPos, BlockState blockState, Function<BoulderEntity, Player> function, BoulderEntity entity) {
+    protected void onBoulderSummon(Level level, BlockPos centerPos, BlockState blockState, LivingEntity trigger, Function<BoulderEntity, Player> function, BoulderEntity entity) {
         //应用大小
         if (entity instanceof GiantBoulderEntity gbEntity) {
             gbEntity.setSize(this.Size);
         }
+
+        //手套触发时静止
+        if (this.hasGloveInHand(trigger)) {
+            entity.setDeltaMovement(0, 0, 0);
+            entity.stillTickCount = entity.maxStillTick;//使用不寻常值拦截，手套触发无视生命周期不用担心会没
+            return;
+        }
+
         BlockPosData data = this.getBetweenClosed(centerPos);
         Iterable<BlockPos> iterablePos = data.iterablePos;
         for (BlockPos iterPos : iterablePos) {

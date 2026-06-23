@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
@@ -48,20 +49,23 @@ public class BoulderBlock extends Block implements IBlockBreakable {
         return true;
     }
 
+    //手中是否有手套
+    public boolean hasGloveInHand(LivingEntity entity){
+        return entity != null && (entity.getItemInHand(InteractionHand.MAIN_HAND).is(ModItems.BOULDER_GLOVE) || entity.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.BOULDER_GLOVE));
+    }
+
     /**
      * 移除方块+生成巨石（by事件）
      * @param level 世界
      * @param state 方块状态
      * @param pos 方块坐标
-     * @param player 触发者，可 null，如果为 null 永远自动索敌
+     * @param trigger 触发者，可 null，如果为 null 永远自动索敌
      * */
     @Override
-    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable Player player) {
+    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable LivingEntity trigger) {
         if(level instanceof ServerLevel serverLevel){
             level.removeBlock(pos, false);
-            //如果拿着手套就不索敌
-            boolean isGloveInteract = player != null && (player.getItemInHand(InteractionHand.MAIN_HAND).is(ModItems.BOULDER_GLOVE) || player.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.BOULDER_GLOVE));
-            this.summonBoulder(state, serverLevel, pos, !isGloveInteract);
+            this.summonBoulder(state, serverLevel, pos, trigger, !this.hasGloveInHand(trigger));//如果拿着手套就不索敌
         }
     }
 
@@ -130,30 +134,35 @@ public class BoulderBlock extends Block implements IBlockBreakable {
         }
     }
 
-    protected void summonBoulder(BlockState state, ServerLevel level, BlockPos pos, boolean targetToNearestPlayer) {
+    /**
+    * @param trigger 触发者
+    * @param targetToNearestPlayer 实体化时是否有目标
+    * */
+    protected void summonBoulder(BlockState state, ServerLevel level, BlockPos pos, LivingEntity trigger, boolean targetToNearestPlayer) {
         if (targetToNearestPlayer) {
-            this.summonBoulder(level, pos, state, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
+            this.summonBoulder(level, pos, state, trigger, entity -> level.getNearestPlayer(entity, BoulderEntity.SEARCH_RANGE));
         }
         else{
-            this.summonBoulder(level, pos, state, _ -> null);
+            this.summonBoulder(level, pos, state, trigger, _ -> null);
         }
     }
-    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {//实体化时是否有目标
-        this.summonBoulder(state, level, pos, true);
+    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos, LivingEntity trigger) {
+        this.summonBoulder(state, level, pos, trigger, true);
     }
 
-    public void summonBoulder(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function) {
+    public void summonBoulder(Level level, BlockPos pos, BlockState blockState, LivingEntity trigger, Function<BoulderEntity, Player> function) {
         //调用工厂方法，如果是子类方块，会动态触发子类重写的方法
         BoulderEntity entity = this.createBoulderEntity(level, pos.getBottomCenter(), blockState);
-        this.onBoulderSummon(level, pos, blockState, function, entity);//触发钩子
+        entity.interactedWithGlove = this.hasGloveInHand(trigger);//如果想取消这个可以去覆写hasGloveInHand
+        this.onBoulderSummon(level, pos, blockState, trigger, function, entity);//触发钩子
         level.addFreshEntity(entity);
     }
 
     //创建一个钩子，便于子类自定义
-    protected void onBoulderSummon(Level level, BlockPos pos, BlockState blockState, Function<BoulderEntity, Player> function, BoulderEntity entity) {
-        Player player = function.apply(entity);
+    protected void onBoulderSummon(Level level, BlockPos pos, BlockState blockState, LivingEntity trigger, Function<BoulderEntity, Player> function, BoulderEntity boulderEntity) {
+        Player player = function.apply(boulderEntity);
         if (player != null && !level.getBlockState(pos.below()).isAir()) {
-            entity.targetTo(player);
+            boulderEntity.targetTo(player);
         }
     }
 

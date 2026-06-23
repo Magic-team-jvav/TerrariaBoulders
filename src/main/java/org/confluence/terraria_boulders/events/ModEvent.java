@@ -101,7 +101,7 @@ public class ModEvent {
             InteractionResult result = iUseItemOnBlock.useItemOnBlock(event.getItemStack(), state, level, event.getPlayer(), event.getHand(), event.getUseOnContext().getHitResult());
 
             //不允许后续放置动作发生
-            if (result.consumesAction()) {
+            if (result != InteractionResult.PASS) {
                 event.setCancellationResult(result);
                 event.setCanceled(true);
             }
@@ -115,7 +115,7 @@ public class ModEvent {
         if (stack.getItem() instanceof IEntityInteractable iEntityInteractable){
             InteractionResult result = iEntityInteractable.interactEntity(stack, event.getEntity(), event.getTarget(), event.getHand());
             //如果接口返回消耗(CONSUME)或成功(SUCCESS)则取消后续事件
-            if (result.consumesAction()) {
+            if (result != InteractionResult.PASS) {
                 event.setCancellationResult(result);
                 event.setCanceled(true);
             }

@@ -709,16 +709,35 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     }
 
     /**
-     * 召唤巨石
-     *
-     * @param state 方块状态
-     * @param level 服务端世界
-     * @param pos   方块位置
+     * 重写父类的破坏逻辑，在方块变成实体前，将方块实体内的皮肤数据（MimicState）强行注入并传递
      */
     @Override
-    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos) {
-        super.summonBoulder(state, level, pos);
+    public void onRemove(Level level, BlockState state, BlockPos pos, @Nullable LivingEntity trigger) {
+        if (level instanceof ServerLevel serverLevel) {
+            //捕获be里的皮肤
+            BlockState actualMimicState = getCamouflageState(serverLevel, pos);
+
+            //移除方块
+            serverLevel.removeBlock(pos, false);
+
+            //是否拿着手套右键触发
+            boolean isGloveInteract = this.hasGloveInHand(trigger);
+
+            this.summonBoulder(actualMimicState, serverLevel, pos, trigger, !isGloveInteract);
+        }
     }
+
+//    /**
+//     * 召唤巨石
+//     *
+//     * @param state 方块状态
+//     * @param level 服务端世界
+//     * @param pos   方块位置
+//     */
+//    @Override
+//    public void summonBoulder(BlockState state, ServerLevel level, BlockPos pos, LivingEntity trigger, boolean isGloveInteract) {
+//        super.summonBoulder(state, level, pos);
+//    }
 
     /**
      * 判断是否可以采集方块
@@ -917,6 +936,16 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
     }
 
     /**
+     * 实现IUseItemOnBlock接口，手动触发useItemOn。
+     * */
+    @Override
+    public InteractionResult useItemOnBlock(ItemStack stack, BlockState state, Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        //玩家为空或者没有潜行就交回控制权
+        if(player == null || !player.isShiftKeyDown()) return InteractionResult.PASS;
+        return this.useItemOn(stack, state, level, hitResult.getBlockPos(), player, hand, hitResult);
+    }
+
+    /**
      * 使用物品右键交互处理
      * <p>
      * 支持以下功能:
@@ -1008,12 +1037,6 @@ public class CamouflagedBoulderBlock extends FullCollisionBoulderBlock implement
         }
 
         return InteractionResult.TRY_WITH_EMPTY_HAND;
-    }
-
-    @Override
-    public InteractionResult useItemOnBlock(ItemStack itemStack, BlockState state, Level level, Player player, InteractionHand hand, BlockHitResult hitResult) {
-
-        return InteractionResult.PASS;
     }
 
     /**
