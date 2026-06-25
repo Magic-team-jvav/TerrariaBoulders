@@ -22,12 +22,14 @@ public class GhoulderEntity extends BoulderEntity {
         super(entityType, level);
         speed = 0.4;
         maxRemoveTick = 500;
+        maxStillTick = 500;
     }
 
     public GhoulderEntity(Level level, Vec3 pos, BlockState blockState) {
         super(ModEntityTypes.GHOULDER.get(), level, pos, blockState);
         speed = 0.4;
         maxRemoveTick = 500;
+        maxStillTick = 500;
     }
 
     @Override
@@ -90,7 +92,7 @@ public class GhoulderEntity extends BoulderEntity {
         setDeltaMovement(vec3.scale(speed));
     }
 
-    /* Copied from newer version of Minecraft */
+    /* Copied from LivingEntity */
     public boolean isLookingAtMe(LivingEntity entity, double tolerance, boolean scaleByDistance, double... yValues) {
         Vec3 vec3 = entity.getViewVector(1.0F).normalize();
 
